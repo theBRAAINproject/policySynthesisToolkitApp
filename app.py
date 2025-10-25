@@ -1,12 +1,6 @@
 """
 Streamlit app for exploring Gen-AI policies and comparing user-uploaded policy.
-Save as app.py and run: `streamlit run app.py`.
 
-Expect dataset at `data/UK-60-HEI-policies_with_file_text.csv` in the repo (preferred),
-or at `/mnt/data/policies.csv` (or .json/.parquet). Required cols:
- - university
- - policy_text
-Optional: url, year, notes
 """
 
 import streamlit as st
@@ -231,27 +225,6 @@ def compute_embedding_sim(model, corpus_texts: List[str], query_text: str) -> np
     sim = cosine_similarity(corpus_embs, query_emb).flatten()
     return sim
 
-# App layout-----------------------------------------------------------------------------
-st.title("Gen-AI Policy Explorer")
-
-# Utilities (loading dataset, sidebar summary, uploader, computing metrics_df)
-df = load_dataset_from_mnt()
-if df is None:
-    st.sidebar.warning("No dataset automatically found in /mnt/data. You can still upload a single policy to compare against an empty corpus.")
-    df = pd.DataFrame(columns=['university', 'policy_text'])
-
-# show basic corpus summary
-st.sidebar.markdown("---")
-st.sidebar.subheader("Corpus summary")
-st.sidebar.write(f"Policies loaded: **{len(df)}**")
-if len(df) > 0:
-    avg_len = int(df['policy_text'].str.len().mean())
-    st.sidebar.write(f"Avg policy length (chars): **{avg_len}**")
-
-
-# Precompute metrics for corpus
-st.sidebar.markdown("---")
-compute_button = st.sidebar.button("(Re)compute corpus metrics")
 
 @st.cache_data
 def compute_corpus_metrics(df: pd.DataFrame) -> pd.DataFrame:
@@ -275,6 +248,30 @@ def compute_corpus_metrics(df: pd.DataFrame) -> pd.DataFrame:
         rows.append(row)
     return pd.DataFrame(rows)
 
+
+# MAIN-------------------------------------------------------------------------------------------
+st.title("Gen-AI Policy Explorer")
+
+# Utilities (loading dataset, sidebar summary, uploader, computing metrics_df)
+df = load_dataset_from_mnt()
+if df is None:
+    st.sidebar.warning("No dataset automatically found in /mnt/data. You can still upload a single policy to compare against an empty corpus.")
+    df = pd.DataFrame(columns=['university', 'policy_text'])
+
+# show basic corpus summary
+# st.sidebar.markdown("---")
+# st.sidebar.subheader("Corpus summary")
+# st.sidebar.write(f"Policies loaded: **{len(df)}**")
+# if len(df) > 0:
+#     avg_len = int(df['policy_text'].str.len().mean())
+#     st.sidebar.write(f"Avg policy length (chars): **{avg_len}**")
+
+
+# Precompute metrics for corpus
+# st.sidebar.markdown("---")
+compute_button = st.sidebar.button("(Re)compute corpus metrics")
+
+
 if len(df) > 0:
     with st.spinner("Computing corpus metrics..."):
         metrics_df = compute_corpus_metrics(df)
@@ -285,6 +282,8 @@ else:
 # Add a sidebar mode selector: Explore, Upload, About
 mode = st.sidebar.radio("Mode", options=["Explore", "Upload", "About"], index=0)
 
+
+# EXPLORE------------------------------------------------------------------------------------------
 if mode == "Explore":
     st.header("Explore policies")
     # prepare display_df for listing/searching (same logic as before)
@@ -351,6 +350,8 @@ if mode == "Explore":
             rd = readability_metrics(str(sel_row.get('policy_text','')))
             st.write(pd.DataFrame([ {**bs, **rd} ]).T.rename(columns={0:"value"}))
 
+
+# UPLOAD------------------------------------------------------------------------------------------
 elif mode == "Upload":
     st.header("Upload & Compare")
     # upload user policy
@@ -425,6 +426,14 @@ elif mode == "Upload":
 
     else:
         st.info("Upload a policy in the sidebar to compare it with corpus policies.")
+
+
+
+
+
+
+
+# About------------------------------------------------------------------------------------------
 
 else:  # About
     st.header("About")
