@@ -234,13 +234,7 @@ def compute_embedding_sim(model, corpus_texts: List[str], query_text: str) -> np
 # App layout
 st.title("Gen-AI Policy Explorer")
 
-# st.sidebar.header("Load / Upload")
-# st.sidebar.markdown(
-#     "Place your corpus at `/mnt/data/policies.csv` (or .json/.parquet). "
-#     "Required columns: `university`, `policy_text`.\n\n"
-#     "You can also upload a single policy file (txt/pdf/docx) to compare."
-# )
-
+# Utilities (loading dataset, sidebar summary, uploader, computing metrics_df)
 df = load_dataset_from_mnt()
 if df is None:
     st.sidebar.warning("No dataset automatically found in /mnt/data. You can still upload a single policy to compare against an empty corpus.")
@@ -290,22 +284,20 @@ if len(df) > 0:
 else:
     metrics_df = pd.DataFrame()
 
-# Main UI
-col1, col2 = st.columns([1.2, 2])
+# Replace previous two-column UI with a mode-based layout
+# Add a sidebar mode selector: Explore, Upload, About
+mode = st.sidebar.radio("Mode", options=["Explore", "Upload", "About"], index=0)
 
-with col1:
-    st.header("Policy list & search")
-    # search and filter
-    q = st.text_input("Search universities or policy text (regex or plain)", value="")
-    min_words = st.slider("Min words", min_value=0, max_value=5000, value=0, step=50)
-    sort_by = st.selectbox("Sort by", options=["university", "words", "chars", "flesch_kincaid"], index=0)
-    ascending = st.checkbox("Ascending", value=False)
-
-    # prepare display df for list
+if mode == "Explore":
+    st.header("Explore corpus")
+    # prepare display_df for listing/searching (same logic as before)
     display_df = df.copy()
     if 'policy_text' in display_df.columns:
         display_df['words'] = display_df['policy_text'].apply(lambda t: len(re.findall(r"\w+", str(t))))
         display_df['chars'] = display_df['policy_text'].apply(lambda t: len(str(t)))
+    # search box and min words filter visible in main pane
+    q = st.text_input("Search universities or policy text (regex or plain)", value="")
+    min_words = st.slider("Min words", min_value=0, max_value=5000, value=0, step=50)
     if q:
         try:
             mask = display_df['university'].str.contains(q, case=False, na=False) | display_df['policy_text'].str.contains(q, case=False, na=False, regex=True)
@@ -313,46 +305,71 @@ with col1:
             mask = display_df['university'].str.contains(q, case=False, na=False)
         display_df = display_df[mask]
     display_df = display_df[display_df.get('words', 0) >= min_words]
-    if sort_by in display_df.columns:
-        display_df = display_df.sort_values(by=sort_by, ascending=ascending)
-    st.dataframe(display_df[['university', 'words', 'chars']].head(100))
 
-    st.markdown("Select a university to view the policy and metrics:")
-    uni_choice = st.selectbox("Choose university", options=[""] + display_df['university'].tolist())
-    if uni_choice:
-        sel_row = df[ df['university']==uni_choice ].iloc[0]
-        st.subheader(f"{uni_choice}")
-        st.write(sel_row.get('url', ''))
-        st.markdown("**Policy text**")
-        st.text_area("Policy", value=sel_row.get('policy_text',''), height=300)
+    st.subheader(f"Policies loaded: {len(display_df)}")
+    st.dataframe(display_df[['university', 'words', 'chars']].head(200))
 
-        st.markdown("**Metrics**")
-        bs = basic_stats(str(sel_row.get('policy_text','')))
-        rd = readability_metrics(str(sel_row.get('policy_text','')))
-        st.write(pd.DataFrame([ {**bs, **rd} ]).T.rename(columns={0:"value"}))
+    # Sidebar: select a university (or All)
+    uni_options = ["All universities"] + display_df['university'].tolist()
+    uni_choice = st.sidebar.selectbox("Choose university to view", options=uni_options, index=0)
 
-with col2:
+    if uni_choice == "All universities":
+        # Show corpus-level statistics (reuse metrics_df if available)
+        st.subheader("Corpus statistics & evaluation overview")
+        if len(metrics_df) == 0:
+            st.info("No corpus metrics available. Add a dataset file to /mnt/data or upload one policy to compare.")
+        else:
+            # Top longest policies
+            top_long = metrics_df.sort_values("words", ascending=False).head(10)
+            st.write("Top 10 longest (by words):")
+            st.table(top_long[['university','words','chars','flesch_kincaid']].reset_index(drop=True))
+
+            # Keyword aggregation
+            kw_cols = [c for c in metrics_df.columns if c.startswith('kw_')]
+            if kw_cols:
+                kw_sum = metrics_df[kw_cols].sum().sort_values(ascending=False)
+                st.subheader("Keyword mentions across corpus (counts)")
+                st.table(kw_sum.rename_axis('keyword').reset_index().rename(columns={0:'count'}))
+
+            # Download metrics
+            st.download_button("Download corpus metrics (CSV)", data=metrics_df.to_csv(index=False).encode('utf-8'), file_name="corpus_metrics.csv", mime="text/csv")
+    else:
+        # Show single-university policy and metrics
+        sel_df = df[df['university'] == uni_choice]
+        if sel_df.empty:
+            st.warning("Selected university not found in dataset.")
+        else:
+            sel_row = sel_df.iloc[0]
+            st.subheader(f"{uni_choice}")
+            if sel_row.get('url'):
+                st.write(sel_row.get('url'))
+            st.markdown("**Policy text**")
+            st.text_area("Policy", value=sel_row.get('policy_text',''), height=300)
+
+            st.markdown("**Metrics**")
+            bs = basic_stats(str(sel_row.get('policy_text','')))
+            rd = readability_metrics(str(sel_row.get('policy_text','')))
+            st.write(pd.DataFrame([ {**bs, **rd} ]).T.rename(columns={0:"value"}))
+
+elif mode == "Upload":
     st.header("Upload & Compare")
+    # The uploader is available in the sidebar by default; show upload preview and comparisons here
     if uploaded:
         st.success(f"Uploaded: {uploaded_name}")
         st.markdown("**Preview**")
         st.text_area("Uploaded policy preview", value=uploaded_text[:5000], height=250)
-        # compute uploaded metrics
         up_bs = basic_stats(uploaded_text)
         up_rd = readability_metrics(uploaded_text)
         st.subheader("Uploaded policy metrics")
         st.write(pd.DataFrame([{**up_bs, **up_rd}]).T.rename(columns={0:"value"}))
 
-        # Build corpus for similarity
         corpus_texts = df['policy_text'].astype(str).tolist()
         corpus_meta = df['university'].astype(str).tolist()
-        # include fallback empty corpus handling
         if len(corpus_texts) == 0:
             st.warning("No corpus policies available to compare against.")
         else:
             st.markdown("**Similarity (TF-IDF cosine)**")
             vectorizer, X = build_tfidf_matrix(corpus_texts + [uploaded_text])
-            # last row is uploaded
             qvec = X[-1]
             corpus_X = X[:-1]
             sims = cosine_similarity(corpus_X, qvec).flatten()
@@ -364,7 +381,6 @@ with col2:
             }).sort_values("similarity", ascending=False).reset_index(drop=True)
             st.dataframe(sim_df.head(20))
 
-            # Optionally: SBERT embeddings if available
             if HAS_SBERT:
                 st.markdown("**Semantic similarity (sentence-transformers)**")
                 with st.spinner("Computing SBERT embeddings..."):
@@ -376,7 +392,7 @@ with col2:
                         st.dataframe(sim_df[['university','sbert_similarity','similarity']].head(20))
                     else:
                         st.info("SBERT model not available.")
-            # Show top 3 matches with small excerpts
+
             st.markdown("**Top matches (excerpt)**")
             top_n = sim_df.head(3)
             for _, r in top_n.iterrows():
@@ -387,7 +403,7 @@ with col2:
                 st.markdown(f"**{uni}** — TF-IDF similarity {simscore:.3f}")
                 st.write(excerpt + ("..." if len(full_text)>800 else ""))
 
-            # Comparison table: show metrics side-by-side for uploaded vs top match
+            # Comparison table with top match
             top_match_uni = sim_df.iloc[0]['university']
             top_text = df.loc[df['university']==top_match_uni, 'policy_text'].values[0]
             top_bs = basic_stats(top_text)
@@ -400,41 +416,20 @@ with col2:
             st.subheader(f"Comparison with top match: {top_match_uni}")
             st.table(comp.set_index('metric'))
 
-            # Allow download of similarity results
             csv = sim_df.to_csv(index=False).encode('utf-8')
             st.download_button("Download similarity table (CSV)", data=csv, file_name="similarity_results.csv", mime="text/csv")
 
     else:
-        st.info("Upload a policy on the left to compare it with corpus policies.")
+        st.info("Upload a policy in the sidebar to compare it with corpus policies.")
 
-# Global corpus-level view and simple plots
-st.markdown("---")
-st.header("Corpus statistics & evaluation overview")
-if len(metrics_df) == 0:
-    st.info("No corpus metrics available. Add a dataset file to /mnt/data or upload one policy to compare.")
-else:
-    st.subheader("Top metrics distribution")
-    # show top 10 longest policies
-    top_long = metrics_df.sort_values("words", ascending=False).head(10)
-    st.write("Top 10 longest (by words):")
-    st.table(top_long[['university','words','chars','flesch_kincaid']].reset_index(drop=True))
-
-    # Keyword heatmap (small representation)
-    kw_cols = [c for c in metrics_df.columns if c.startswith('kw_')]
-    if kw_cols:
-        kw_sum = metrics_df[kw_cols].sum().sort_values(ascending=False)
-        st.subheader("Keyword mentions across corpus (counts)")
-        st.table(kw_sum.rename_axis('keyword').reset_index().rename(columns={0:'count'}))
-
-    # Basic downloadable metrics
-    st.download_button("Download corpus metrics (CSV)", data=metrics_df.to_csv(index=False).encode('utf-8'), file_name="corpus_metrics.csv", mime="text/csv")
-
-st.markdown("---")
-st.caption("Notes: Readability metrics require the `textstat` package; semantic similarity requires `sentence-transformers`. "
-           "If these are not installed, the app falls back to TF-IDF similarity and approximate stats.")
-
-st.markdown("### Dev notes / Editing dataset")
-st.write(
-    "If your dataset columns differ from `university` and `policy_text`, rename them or load the file into `/mnt/data/policies.csv` "
-    "with those column names. The code tries to guess text/university columns but explicit naming is more reliable."
-)
+else:  # About
+    st.header("About")
+    st.markdown("This app helps explore Gen-AI policies across universities, compute basic readability/keyword metrics, "
+                "and compare an uploaded policy against the corpus via TF-IDF (and SBERT where available).")
+    st.markdown("Notes: Readability metrics require the `textstat` package; semantic similarity requires `sentence-transformers`. "
+                "If these are not installed, the app falls back to TF-IDF similarity and approximate stats.")
+    st.markdown("### Dev notes / Editing dataset")
+    st.write(
+        "If your dataset columns differ from `university` and `policy_text`, rename them or load the file into `/mnt/data/policies.csv` "
+        "with those column names. The code tries to guess text/university columns but explicit naming is more reliable."
+    )
