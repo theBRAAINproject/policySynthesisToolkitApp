@@ -108,8 +108,8 @@ def load_dataset_from_mnt() -> Optional[pd.DataFrame]:
             st.warning(f"Dataset {p.name} doesn't contain a 'policy_text' column. Found columns: {df.columns.tolist()}")
             return None
     if 'university' not in df.columns:
-        # attempt guess
-        uni_cols = [c for c in df.columns if 'univ' in c.lower() or 'institution' in c.lower() or 'school' in c.lower()]
+        # attempt guess (include common 'name' column)
+        uni_cols = [c for c in df.columns if 'univ' in c.lower() or 'institution' in c.lower() or 'school' in c.lower() or c.lower() == 'name']
         if uni_cols:
             df = df.rename(columns={uni_cols[0]: 'university'})
         else:
