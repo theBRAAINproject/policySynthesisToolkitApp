@@ -46,7 +46,7 @@ try:
 except Exception:
     HAS_PDF = False
 
-# sentence-transformers optional (for semantic embeddings if available)
+# sentence-transformers  (for semantic embeddings if available)
 try:
     from sentence_transformers import SentenceTransformer
     import torch
@@ -289,22 +289,20 @@ if mode == "Explore":
     st.header("Explore policies")
     # prepare display_df for listing/searching (same logic as before)
     display_df = df.copy()
-    if 'policy_text' in display_df.columns:
-        display_df['words'] = display_df['policy_text'].apply(lambda t: len(re.findall(r"\w+", str(t))))
-        display_df['chars'] = display_df['policy_text'].apply(lambda t: len(str(t)))
-    # search box and min words filter visible in main pane
-    q = st.text_input("Search universities or policy text (regex or plain)", value="")
-    min_words = st.slider("Min words", min_value=0, max_value=5000, value=0, step=50)
-    if q:
-        try:
-            mask = display_df['university'].str.contains(q, case=False, na=False) | display_df['policy_text'].str.contains(q, case=False, na=False, regex=True)
-        except Exception:
-            mask = display_df['university'].str.contains(q, case=False, na=False)
-        display_df = display_df[mask]
-    display_df = display_df[display_df.get('words', 0) >= min_words]
+    # if 'policy_text' in display_df.columns:
+    #     display_df['words'] = display_df['policy_text'].apply(lambda t: len(re.findall(r"\w+", str(t))))
+    #     display_df['chars'] = display_df['policy_text'].apply(lambda t: len(str(t)))
+    # # search box and min words filter visible in main pane
+    # q = st.text_input("Search universities or policy text (regex or plain)", value="")
+    # min_words = st.slider("Min words", min_value=0, max_value=5000, value=0, step=50)
+    # if q:
+    #     try:
+    #         mask = display_df['university'].str.contains(q, case=False, na=False) | display_df['policy_text'].str.contains(q, case=False, na=False, regex=True)
+    #     except Exception:
+    #         mask = display_df['university'].str.contains(q, case=False, na=False)
+    #     display_df = display_df[mask]
+    # display_df = display_df[display_df.get('words', 0) >= min_words]
 
-    st.subheader(f"Policies loaded: {len(display_df)}")
-    st.dataframe(display_df[['university', 'words', 'chars']].head(200))
 
     # Sidebar: select a university (or All)
     uni_options = ["All universities"] + display_df['university'].tolist()
@@ -312,10 +310,15 @@ if mode == "Explore":
 
     if uni_choice == "All universities":
         # Show corpus-level statistics (reuse metrics_df if available)
+
         st.subheader("Statistics & evaluation overview")
         if len(metrics_df) == 0:
             st.info("No corpus metrics available. Add a dataset file to /mnt/data or upload one policy to compare.")
         else:
+            st.subheader(f"Policies loaded: {len(display_df)}")
+            st.dataframe(display_df[['university', 'words', 'chars']].head(200))
+            #basic stats
+            st.markdown("**Basic statistics across universities**")
             # Top longest policies
             top_long = metrics_df.sort_values("words", ascending=False).head(10)
             st.write("Top 10 longest (by words):")
@@ -325,7 +328,7 @@ if mode == "Explore":
             kw_cols = [c for c in metrics_df.columns if c.startswith('kw_')]
             if kw_cols:
                 kw_sum = metrics_df[kw_cols].sum().sort_values(ascending=False)
-                st.subheader("Keyword mentions across corpus (counts)")
+                st.subheader("Keyword mentions across universities (counts)")
                 st.table(kw_sum.rename_axis('keyword').reset_index().rename(columns={0:'count'}))
 
             # Download metrics
@@ -427,10 +430,4 @@ else:  # About
     st.header("About")
     st.markdown("This app helps explore Gen-AI policies across universities, compute basic readability/keyword metrics, "
                 "and compare an uploaded policy against the corpus via TF-IDF (and SBERT where available).")
-    # st.markdown("Notes: Readability metrics require the `textstat` package; semantic similarity requires `sentence-transformers`. "
-                # "If these are not installed, the app falls back to TF-IDF similarity and approximate stats.")
-    # st.markdown("### Dev notes / Editing dataset")
-    # st.write(
-    #     "If your dataset columns differ from `university` and `policy_text`, rename them or load the file into `/mnt/data/policies.csv` "
-    #     "with those column names. The code tries to guess text/university columns but explicit naming is more reliable."
-    # )
+
