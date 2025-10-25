@@ -262,9 +262,9 @@ if df is None:
 # st.sidebar.markdown("---")
 # st.sidebar.subheader("Corpus summary")
 # st.sidebar.write(f"Policies loaded: **{len(df)}**")
-# if len(df) > 0:
-#     avg_len = int(df['policy_text'].str.len().mean())
-#     st.sidebar.write(f"Avg policy length (chars): **{avg_len}**")
+if len(df) > 0:
+    avg_len = int(df['policy_text'].str.len().mean())
+    # st.sidebar.write(f"Avg policy length (chars): **{avg_len}**")
 
 
 # Precompute metrics for corpus
@@ -285,13 +285,13 @@ mode = st.sidebar.radio("Mode", options=["Explore", "Upload", "About"], index=0)
 
 # EXPLORE------------------------------------------------------------------------------------------
 if mode == "Explore":
-    st.header("Explore policies")
+    st.header("Exploring policies")
     # prepare display_df for listing/searching (same logic as before)
     display_df = df.copy()
-    # if 'policy_text' in display_df.columns:
-    #     display_df['words'] = display_df['policy_text'].apply(lambda t: len(re.findall(r"\w+", str(t))))
-    #     display_df['chars'] = display_df['policy_text'].apply(lambda t: len(str(t)))
-    # # search box and min words filter visible in main pane
+    if 'policy_text' in display_df.columns:
+        display_df['words'] = display_df['policy_text'].apply(lambda t: len(re.findall(r"\w+", str(t))))
+        display_df['chars'] = display_df['policy_text'].apply(lambda t: len(str(t)))
+    # search box and min words filter visible in main pane
     # q = st.text_input("Search universities or policy text (regex or plain)", value="")
     # min_words = st.slider("Min words", min_value=0, max_value=5000, value=0, step=50)
     # if q:
