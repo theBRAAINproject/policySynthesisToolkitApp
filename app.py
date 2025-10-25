@@ -250,7 +250,7 @@ def compute_corpus_metrics(df: pd.DataFrame) -> pd.DataFrame:
 
 
 # MAIN-------------------------------------------------------------------------------------------
-st.title("Gen-AI Policy Explorer")
+st.sidebar.title("Gen-AI Policy Explorer")
 
 # Utilities (loading dataset, sidebar summary, uploader, computing metrics_df)
 df = load_dataset_from_mnt()
@@ -285,7 +285,7 @@ mode = st.sidebar.radio("Mode", options=["Explore", "Upload", "About"], index=0)
 
 # EXPLORE------------------------------------------------------------------------------------------
 if mode == "Explore":
-    st.header("Exploring policies")
+    st.text("Exploring policies")
     # prepare display_df for listing/searching (same logic as before)
     display_df = df.copy()
     if 'policy_text' in display_df.columns:
