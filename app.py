@@ -231,7 +231,7 @@ def compute_embedding_sim(model, corpus_texts: List[str], query_text: str) -> np
     sim = cosine_similarity(corpus_embs, query_emb).flatten()
     return sim
 
-# App layout
+# App layout-----------------------------------------------------------------------------
 st.title("Gen-AI Policy Explorer")
 
 # Utilities (loading dataset, sidebar summary, uploader, computing metrics_df)
@@ -286,7 +286,7 @@ else:
 mode = st.sidebar.radio("Mode", options=["Explore", "Upload", "About"], index=0)
 
 if mode == "Explore":
-    st.header("Explore corpus")
+    st.header("Explore policies")
     # prepare display_df for listing/searching (same logic as before)
     display_df = df.copy()
     if 'policy_text' in display_df.columns:
@@ -312,7 +312,7 @@ if mode == "Explore":
 
     if uni_choice == "All universities":
         # Show corpus-level statistics (reuse metrics_df if available)
-        st.subheader("Corpus statistics & evaluation overview")
+        st.subheader("Statistics & evaluation overview")
         if len(metrics_df) == 0:
             st.info("No corpus metrics available. Add a dataset file to /mnt/data or upload one policy to compare.")
         else:
@@ -329,7 +329,7 @@ if mode == "Explore":
                 st.table(kw_sum.rename_axis('keyword').reset_index().rename(columns={0:'count'}))
 
             # Download metrics
-            st.download_button("Download corpus metrics (CSV)", data=metrics_df.to_csv(index=False).encode('utf-8'), file_name="corpus_metrics.csv", mime="text/csv")
+            st.download_button("Download metrics (CSV)", data=metrics_df.to_csv(index=False).encode('utf-8'), file_name="corpus_metrics.csv", mime="text/csv")
     else:
         # Show single-university policy and metrics
         sel_df = df[df['university'] == uni_choice]
@@ -340,7 +340,7 @@ if mode == "Explore":
             st.subheader(f"{uni_choice}")
             if sel_row.get('url'):
                 st.write(sel_row.get('url'))
-            st.markdown("**Policy text**")
+            st.markdown("**Raw policy text**")
             st.text_area("Policy", value=sel_row.get('policy_text',''), height=300)
 
             st.markdown("**Metrics**")

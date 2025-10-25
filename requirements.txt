@@ -5,3 +5,6 @@ pathlib
 typing
 textstat
 sentence-transformers
+PyPDF2 
+docx 
+textstart
