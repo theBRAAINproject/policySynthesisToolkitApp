@@ -2,7 +2,8 @@
 Streamlit app for exploring Gen-AI policies and comparing user-uploaded policy.
 Save as app.py and run: `streamlit run app.py`.
 
-Expect dataset at /mnt/data/policies.csv (or .json/.parquet). Required cols:
+Expect dataset at `data/UK-60-HEI-policies_with_file_text.csv` in the repo (preferred),
+or at `/mnt/data/policies.csv` (or .json/.parquet). Required cols:
  - university
  - policy_text
 Optional: url, year, notes
@@ -58,14 +59,26 @@ st.set_page_config(page_title="GenAI Policy Explorer", layout="wide")
 # Utilities
 @st.cache_data
 def load_dataset_from_mnt() -> Optional[pd.DataFrame]:
-    data_dir = Path("/mnt/data")
+    # Search local repo `data/` first, then fallback to `/mnt/data`
     candidates = []
+    repo_data = Path(__file__).parent / "data"
+    if repo_data.exists():
+        for ext in ("csv", "json", "parquet", "xlsx"):
+            for p in repo_data.glob(f"*.{ext}"):
+                candidates.append(p)
+    data_dir = Path("/mnt/data")
     if data_dir.exists():
         for ext in ("csv", "json", "parquet", "xlsx"):
             for p in data_dir.glob(f"*.{ext}"):
-                candidates.append(p)
-    # Prefer policies.* names
-    pref = [p for p in candidates if "policy" in p.name.lower()]
+                # avoid duplicates if same filename present in both
+                if p not in candidates:
+                    candidates.append(p)
+    # Prefer the known dataset name if present
+    pref_name = "UK-60-HEI-policies_with_file_text"
+    pref = [p for p in candidates if pref_name in p.name]
+    # Prefer files with 'policy' in the name otherwise
+    if not pref:
+        pref = [p for p in candidates if "policy" in p.name.lower()]
     candidates = pref or candidates
     if not candidates:
         return None
