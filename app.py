@@ -250,7 +250,9 @@ def compute_corpus_metrics(df: pd.DataFrame) -> pd.DataFrame:
 
 
 # MAIN-------------------------------------------------------------------------------------------
+st.sidebar.markdown(f"![logo]({/img/pstapplogo.png})")
 st.sidebar.title("Gen-AI Policy Explorer")
+
 
 # Utilities (loading dataset, sidebar summary, uploader, computing metrics_df)
 df = load_dataset_from_mnt()
