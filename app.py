@@ -248,9 +248,6 @@ if len(df) > 0:
     avg_len = int(df['policy_text'].str.len().mean())
     st.sidebar.write(f"Avg policy length (chars): **{avg_len}**")
 
-# upload user policy
-uploaded = st.sidebar.file_uploader("Upload your policy (txt / pdf / docx)", type=['txt','pdf','docx'])
-uploaded_name, uploaded_text = read_uploaded_file(uploaded) if uploaded else ("", "")
 
 # Precompute metrics for corpus
 st.sidebar.markdown("---")
@@ -353,6 +350,10 @@ if mode == "Explore":
 
 elif mode == "Upload":
     st.header("Upload & Compare")
+    # upload user policy
+    uploaded = st.file_uploader("Upload your policy (txt / pdf / docx)", type=['txt','pdf','docx'])
+    uploaded_name, uploaded_text = read_uploaded_file(uploaded) if uploaded else ("", "")
+
     # The uploader is available in the sidebar by default; show upload preview and comparisons here
     if uploaded:
         st.success(f"Uploaded: {uploaded_name}")
@@ -426,10 +427,10 @@ else:  # About
     st.header("About")
     st.markdown("This app helps explore Gen-AI policies across universities, compute basic readability/keyword metrics, "
                 "and compare an uploaded policy against the corpus via TF-IDF (and SBERT where available).")
-    st.markdown("Notes: Readability metrics require the `textstat` package; semantic similarity requires `sentence-transformers`. "
-                "If these are not installed, the app falls back to TF-IDF similarity and approximate stats.")
-    st.markdown("### Dev notes / Editing dataset")
-    st.write(
-        "If your dataset columns differ from `university` and `policy_text`, rename them or load the file into `/mnt/data/policies.csv` "
-        "with those column names. The code tries to guess text/university columns but explicit naming is more reliable."
-    )
+    # st.markdown("Notes: Readability metrics require the `textstat` package; semantic similarity requires `sentence-transformers`. "
+                # "If these are not installed, the app falls back to TF-IDF similarity and approximate stats.")
+    # st.markdown("### Dev notes / Editing dataset")
+    # st.write(
+    #     "If your dataset columns differ from `university` and `policy_text`, rename them or load the file into `/mnt/data/policies.csv` "
+    #     "with those column names. The code tries to guess text/university columns but explicit naming is more reliable."
+    # )
