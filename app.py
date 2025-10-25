@@ -98,6 +98,23 @@ def load_dataset_from_mnt() -> Optional[pd.DataFrame]:
     except Exception as e:
         st.warning(f"Failed to read {p.name}: {e}")
         return None
+    # Normalize column names (strip whitespace) and map common columns from the provided CSV
+    df.columns = [c.strip() for c in df.columns]
+    # explicit mapping for known CSV layout: Rank, Name, Filename, PolicyURL, Policy Text
+    col_map = {}
+    for c in df.columns:
+        lc = c.lower().replace(' ', '')
+        if lc == 'policytext' or ('policy' in lc and 'text' in lc) or lc.endswith('policytext'):
+            col_map[c] = 'policy_text'
+        elif lc == 'name' or lc == 'university' or 'institution' in lc:
+            # map 'Name' -> 'university'
+            col_map[c] = 'university'
+        elif lc in ('policyurl', 'policy_url', 'url'):
+            col_map[c] = 'url'
+        elif lc == 'filename':
+            col_map[c] = 'filename'
+    if col_map:
+        df = df.rename(columns=col_map)
     # Ensure columns
     if 'policy_text' not in df.columns:
         # try guesses
@@ -215,14 +232,14 @@ def compute_embedding_sim(model, corpus_texts: List[str], query_text: str) -> np
     return sim
 
 # App layout
-st.title("Gen-AI Policy Explorer — Universities")
+st.title("Gen-AI Policy Explorer")
 
-st.sidebar.header("Load / Upload")
-st.sidebar.markdown(
-    "Place your corpus at `/mnt/data/policies.csv` (or .json/.parquet). "
-    "Required columns: `university`, `policy_text`.\n\n"
-    "You can also upload a single policy file (txt/pdf/docx) to compare."
-)
+# st.sidebar.header("Load / Upload")
+# st.sidebar.markdown(
+#     "Place your corpus at `/mnt/data/policies.csv` (or .json/.parquet). "
+#     "Required columns: `university`, `policy_text`.\n\n"
+#     "You can also upload a single policy file (txt/pdf/docx) to compare."
+# )
 
 df = load_dataset_from_mnt()
 if df is None:
