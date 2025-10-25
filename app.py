@@ -349,14 +349,14 @@ if mode == "Explore":
             col1, col2 = st.columns(2)
             
             with col1:
-            st.markdown("**Raw policy text**")
-            st.text_area("Raw policy text", value=sel_row.get('policy_text',''), height=300)
+                st.markdown("**Raw policy text**")
+                st.text_area("Raw policy text", value=sel_row.get('policy_text',''), height=300)
             
             with col2:
-            st.markdown("**Metrics**")
-            bs = basic_stats(str(sel_row.get('policy_text','')))
-            rd = readability_metrics(str(sel_row.get('policy_text','')))
-            st.write(pd.DataFrame([ {**bs, **rd} ]).T.rename(columns={0:"value"}))
+                st.markdown("**Metrics**")
+                bs = basic_stats(str(sel_row.get('policy_text','')))
+                rd = readability_metrics(str(sel_row.get('policy_text','')))
+                st.write(pd.DataFrame([ {**bs, **rd} ]).T.rename(columns={0:"value"}))
 
 
 # UPLOAD------------------------------------------------------------------------------------------
