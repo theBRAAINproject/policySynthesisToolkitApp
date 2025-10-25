@@ -251,8 +251,16 @@ def compute_corpus_metrics(df: pd.DataFrame) -> pd.DataFrame:
 
 # MAIN-------------------------------------------------------------------------------------------
 
-st.logo("/img/pstapplogo.png")
+
 st.sidebar.title("Gen-AI Policy Explorer")
+
+# Streamlit App Configuration
+st.set_page_config(page_title="Gen-AI Policy Explorer", layout="wide", initial_sidebar_state="expanded")
+
+applogo = "/img/pstapplogo.png" 
+if os.path.exists(applogo):
+    st.sidebar.image(applogo, width=70)
+
 
 
 # Utilities (loading dataset, sidebar summary, uploader, computing metrics_df)
