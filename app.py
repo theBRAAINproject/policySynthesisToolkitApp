@@ -344,7 +344,7 @@ if mode == "Explore":
             sel_row = sel_df.iloc[0]
             st.subheader(f"{uni_choice}")
             if sel_row.get('url'):
-            st.write(sel_row.get('url'))
+                st.write(sel_row.get('url'))
             
             col1, col2 = st.columns(2)
             
