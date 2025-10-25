@@ -3,3 +3,5 @@ pandas
 numpy
 pathlib
 typing
+textstat
+sentence-transformers
