@@ -13,7 +13,6 @@ matplotlib
 textatistic
 statistics
 spacy
-sklearn
 pyLDAvis
 corextopic
 pprint
