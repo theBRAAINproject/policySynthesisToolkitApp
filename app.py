@@ -1,6 +1,5 @@
 """
 Streamlit app for exploring Gen-AI policies and comparing user-uploaded policy.
-
 """
 
 import streamlit as st
@@ -225,7 +224,6 @@ def compute_embedding_sim(model, corpus_texts: List[str], query_text: str) -> np
     sim = cosine_similarity(corpus_embs, query_emb).flatten()
     return sim
 
-
 @st.cache_data
 def compute_corpus_metrics(df: pd.DataFrame) -> pd.DataFrame:
     keywords = ["student", "staff", "assessment", "plagiarism", "ai", "attribution", "data", "consent", "privacy", "third party", "model", "training"]
@@ -248,20 +246,15 @@ def compute_corpus_metrics(df: pd.DataFrame) -> pd.DataFrame:
         rows.append(row)
     return pd.DataFrame(rows)
 
-
+#------------------------------------------------------------------------------------------------
 # MAIN-------------------------------------------------------------------------------------------
-
-
-
 # Streamlit App Configuration
 st.set_page_config(page_title="Gen-AI Policy Explorer", layout="wide", initial_sidebar_state="expanded")
 
 applogo = "img/pstapplogo.png" 
 if os.path.exists(applogo):
     st.sidebar.image(applogo, width=70)
-
 st.sidebar.header("HEI Gen AI Policy Toolkit")
-
 
 # Utilities (loading dataset, sidebar summary, uploader, computing metrics_df)
 df = load_dataset_from_mnt()
@@ -291,27 +284,53 @@ else:
 
 # Replace previous two-column UI with a mode-based layout
 # Add a sidebar mode selector: Explore, Upload, About
-mode = st.sidebar.radio("Mode", options=["Explore", "Upload", "About"], index=0)
+mode = st.sidebar.radio("Mode", options=["About", "Explore", "Analyse", "Upload"], index=0)
 
 
+# #------------------------------------------------------------------------------------------------
+# # EXPLORE------------------------------------------------------------------------------------------
+if mode == "Analyse":
+    st.text("select university to analyze")
+    uni_choice = st.selectbox("Choose university", options=["All universities"] + df['university'].tolist())
+
+
+    # prepare display_df for listing/searching (same logic as before)
+    display_df = df.copy()
+    if 'policy_text' in display_df.columns:
+        display_df['words'] = display_df['policy_text'].apply(lambda t: len(re.findall(r"\w+", str(t))))
+        display_df['chars'] = display_df['policy_text'].apply(lambda t: len(str(t)))
+        display_df['avg_word_length'] = display_df['chars'] / display_df['words'].replace(0, np.nan)
+        display_df['flesch_kincaid'] = display_df['policy_text'].apply(lambda t: textstat.flesch_kincaid_grade(str(t)))
+        display_df['flesch_reading_ease'] = display_df['policy_text'].apply(lambda t: textstat.flesch_reading_ease(str(t)))     
+
+
+
+#------------------------------------------------------------------------------------------------
 # EXPLORE------------------------------------------------------------------------------------------
-if mode == "Explore":
+elif mode == "Explore":
     st.text("Exploring policies")
     # prepare display_df for listing/searching (same logic as before)
     display_df = df.copy()
     if 'policy_text' in display_df.columns:
         display_df['words'] = display_df['policy_text'].apply(lambda t: len(re.findall(r"\w+", str(t))))
         display_df['chars'] = display_df['policy_text'].apply(lambda t: len(str(t)))
+
+    #ideas: 
+    # show list of universities as containers with name of university and explore button
+    # show logos on UK map
+
     # search box and min words filter visible in main pane
-    # q = st.text_input("Search universities or policy text (regex or plain)", value="")
+    q = st.text_input("Search universities or policy text", value="")
     # min_words = st.slider("Min words", min_value=0, max_value=5000, value=0, step=50)
-    # if q:
-    #     try:
-    #         mask = display_df['university'].str.contains(q, case=False, na=False) | display_df['policy_text'].str.contains(q, case=False, na=False, regex=True)
-    #     except Exception:
-    #         mask = display_df['university'].str.contains(q, case=False, na=False)
-    #     display_df = display_df[mask]
-    # display_df = display_df[display_df.get('words', 0) >= min_words]
+    min_words = 0
+    if q:
+        try:
+            mask = display_df['university'].str.contains(q, case=False, na=False) | display_df['policy_text'].str.contains(q, case=False, na=False, regex=True)
+        except Exception:
+            mask = display_df['university'].str.contains(q, case=False, na=False)
+        display_df = display_df[mask]
+    display_df = display_df[display_df.get('words', 0) >= min_words]
+    
 
 
     # Sidebar: select a university (or All)
@@ -366,7 +385,7 @@ if mode == "Explore":
                 rd = readability_metrics(str(sel_row.get('policy_text','')))
                 st.write(pd.DataFrame([ {**bs, **rd} ]).T.rename(columns={0:"value"}))
 
-
+#-------------------------------------------------------------------------------------------------
 # UPLOAD------------------------------------------------------------------------------------------
 elif mode == "Upload":
     st.header("Upload & Compare")
@@ -446,13 +465,4 @@ elif mode == "Upload":
 
 
 
-
-
-
-# About------------------------------------------------------------------------------------------
-
-else:  # About
-    st.header("About")
-    st.markdown("This app helps explore Gen-AI policies across universities, compute basic readability/keyword metrics, "
-                "and compare an uploaded policy against the corpus via TF-IDF (and SBERT where available).")
 
