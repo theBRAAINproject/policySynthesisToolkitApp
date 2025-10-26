@@ -532,94 +532,94 @@ elif mode == "Analyse":
     
     # Word cloud for selected university
         wordcloud = generate_word_cloud(sel_df['policy_text'], name=uni_choice)
-
-    idx=sel_row.name  # get index of selected row
-
-
-    policies = df['policy_text']
-    # Split policies into equal-length chunks (e.g., 50 words)
-    opt_chunk_size=60
-    chunk_size=opt_chunk_size
-    print(f"Using chunk size = {chunk_size} words")
-    # chunk_size=100 --- IGNORE ---
+    #get row number for university
+        idx= sel_row.name
 
 
-    def chunk_policy(text, chunk_size):
-        words = text.split()
-        return [' '.join(words[i:i+chunk_size]) for i in range(0, len(words), chunk_size)]
-
-    chunks = []
-
-    for policy in policies:
-        chunks.extend(chunk_policy(policy, chunk_size))
-
-    # Prepare document-term matrix for chunks
-    vectorizer = CountVectorizer(stop_words='english')
-    doc_term_matrix = vectorizer.fit_transform(chunks)
-    words = vectorizer.get_feature_names_out()
-
-    anchors = topics_from_thematic_analysis
-    n_topics = len(anchors)+1
-    # n_topics=14
-    corex_model = ct.Corex(n_hidden=n_topics, words=words, seed=42)
+        policies = df['policy_text']
+        # Split policies into equal-length chunks (e.g., 50 words)
+        opt_chunk_size=60
+        chunk_size=opt_chunk_size
+        print(f"Using chunk size = {chunk_size} words")
+        # chunk_size=100 --- IGNORE ---
 
 
+        def chunk_policy(text, chunk_size):
+            words = text.split()
+            return [' '.join(words[i:i+chunk_size]) for i in range(0, len(words), chunk_size)]
 
-    corex_model.fit(doc_term_matrix, words=words, anchors=anchors, anchor_strength=5)
+        chunks = []
+
+        for policy in policies:
+            chunks.extend(chunk_policy(policy, chunk_size))
+
+        # Prepare document-term matrix for chunks
+        vectorizer = CountVectorizer(stop_words='english')
+        doc_term_matrix = vectorizer.fit_transform(chunks)
+        words = vectorizer.get_feature_names_out()
+
+        anchors = topics_from_thematic_analysis
+        n_topics = len(anchors)+1
+        # n_topics=14
+        corex_model = ct.Corex(n_hidden=n_topics, words=words, seed=42)
 
 
-    n_topics=len(anchors)+1
-    corex_topics = [f'CorEx_topic_{i}' for i in range(n_topics)]
-    # CorEx topic values for this policy (uses existing CorEx_topic_* columns)
-    corex_topic_cols = corex_topics  # provided in notebook as a list of column names
-    corex_vals = df.loc[idx, corex_topic_cols].astype(float).values
-    print("CorEx topic values (from df):")
-    for i, v in enumerate(corex_vals):
-        print(f"  {corex_topic_cols[i]}: {v:.4f}")
-    print()
 
-            # Print top words for each CorEx topic from the fitted corex_model (if available)
-    if 'corex_model' in globals():
-        print("Top words per CorEx topic:")
-        for i, topic in enumerate(corex_model.get_topics(n_words=8)):
-            top_words = [w for w, _, _ in topic]
-            print(f"  Topic {i}: {', '.join(top_words)}")
+        corex_model.fit(doc_term_matrix, words=words, anchors=anchors, anchor_strength=5)
+
+
+        n_topics=len(anchors)+1
+        corex_topics = [f'CorEx_topic_{i}' for i in range(n_topics)]
+        # CorEx topic values for this policy (uses existing CorEx_topic_* columns)
+        corex_topic_cols = corex_topics  # provided in notebook as a list of column names
+        corex_vals = df.loc[idx, corex_topic_cols].astype(float).values
+        print("CorEx topic values (from df):")
+        for i, v in enumerate(corex_vals):
+            print(f"  {corex_topic_cols[i]}: {v:.4f}")
         print()
 
-            # Pie chart of CorEx topic distribution for this policy (include first word of each topic)
-    plt.figure(figsize=(6,6))
-    if corex_vals.sum() == 0:
-        # no topics matched -- show a single grey slice
-        plt.pie([1], labels=['No matching CorEx topics'], colors=['lightgrey'], autopct='%1.1f%%', startangle=140)
-    else:
-        # try to get the first word for each CorEx topic from the fitted model
-        first_words = []
+                # Print top words for each CorEx topic from the fitted corex_model (if available)
         if 'corex_model' in globals():
-            topics = corex_model.get_topics(n_words=1)
-                    # topics is a list where each element is a list/tuple of (word, score, ...)
-            for t in topics[:len(corex_vals)]:
-                first_words.append(t[0][0] if t and len(t) > 0 else '')
-        else:
-            first_words = [''] * len(corex_vals)
+            print("Top words per CorEx topic:")
+            for i, topic in enumerate(corex_model.get_topics(n_words=8)):
+                top_words = [w for w, _, _ in topic]
+                print(f"  Topic {i}: {', '.join(top_words)}")
+            print()
 
-        # build labels with the top 3 words for each CorEx topic (fallback to existing first_words)
-        if 'corex_model' in globals():
-            topics_top3 = corex_model.get_topics(n_words=5)
-            label_words = []
-            for t in topics_top3[:len(corex_vals)]:
-                if t:
-                            # each t is list of tuples like (word, score, ...)
-                    words = [w for w, *rest in t][:5]
-                    label_words.append(', '.join(words))
-                else:
-                    label_words.append('')
+                # Pie chart of CorEx topic distribution for this policy (include first word of each topic)
+        plt.figure(figsize=(6,6))
+        if corex_vals.sum() == 0:
+            # no topics matched -- show a single grey slice
+            plt.pie([1], labels=['No matching CorEx topics'], colors=['lightgrey'], autopct='%1.1f%%', startangle=140)
         else:
-            label_words = [fw or '' for fw in first_words]
+            # try to get the first word for each CorEx topic from the fitted model
+            first_words = []
+            if 'corex_model' in globals():
+                topics = corex_model.get_topics(n_words=1)
+                        # topics is a list where each element is a list/tuple of (word, score, ...)
+                for t in topics[:len(corex_vals)]:
+                    first_words.append(t[0][0] if t and len(t) > 0 else '')
+            else:
+                first_words = [''] * len(corex_vals)
 
-        labels = [f"Topic {i}: ({label_words[i]})" if label_words[i] else f"Topic {i}" for i in range(len(corex_vals))]
-        plt.pie(corex_vals, labels=labels, autopct='%1.1f%%', startangle=140)
-    plt.title(f"CorEx topic distribution for policy {idx}")
-    plt.show()
+            # build labels with the top 3 words for each CorEx topic (fallback to existing first_words)
+            if 'corex_model' in globals():
+                topics_top3 = corex_model.get_topics(n_words=5)
+                label_words = []
+                for t in topics_top3[:len(corex_vals)]:
+                    if t:
+                                # each t is list of tuples like (word, score, ...)
+                        words = [w for w, *rest in t][:5]
+                        label_words.append(', '.join(words))
+                    else:
+                        label_words.append('')
+            else:
+                label_words = [fw or '' for fw in first_words]
+
+            labels = [f"Topic {i}: ({label_words[i]})" if label_words[i] else f"Topic {i}" for i in range(len(corex_vals))]
+            plt.pie(corex_vals, labels=labels, autopct='%1.1f%%', startangle=140)
+        plt.title(f"CorEx topic distribution for policy {idx}")
+        plt.show()
 
  
 
