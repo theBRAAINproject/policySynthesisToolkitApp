@@ -249,7 +249,7 @@ def compute_corpus_metrics(df: pd.DataFrame) -> pd.DataFrame:
         rows.append(row)
     return pd.DataFrame(rows)
 
-def generate_word_cloud(texts: pd.Series):
+def generate_word_cloud(texts: pd.Series, name):
     from wordcloud import WordCloud, STOPWORDS
     combined_text = " ".join(texts.astype(str).tolist())
     # extend stopwords with some common artifacts from scraped policies
@@ -262,8 +262,8 @@ def generate_word_cloud(texts: pd.Series):
     fig, ax = plt.subplots(figsize=(14, 7))
     ax.imshow(wc, interpolation='bilinear')
     ax.axis('off')
-    ax.set_title('Combined Word Cloud for All Policies', fontsize=16)
-    
+    ax.set_title(f'Word Cloud for {name}', fontsize=16)
+
     # Display in streamlit
     st.pyplot(fig)
     plt.close(fig)
@@ -271,7 +271,7 @@ def generate_word_cloud(texts: pd.Series):
     # allow download as image
     buf = io.BytesIO()
     wc.to_image().save(buf, format='PNG')
-    st.download_button("Download Word Cloud", buf.getvalue(), "wordcloud.png")
+    st.download_button(name, buf.getvalue(), "wordcloud.png")
 
 #------------------------------------------------------------------------------------------------
 # MAIN-------------------------------------------------------------------------------------------
@@ -414,10 +414,10 @@ elif mode == "Explore":
 
     st.subheader("Combined word cloud")
         # Generate and display word cloud
-    generate_word_cloud(display_df['policy_text'])
+    # generate_word_cloud(display_df['policy_text'])
         # Generate and display word cloud
-    wordcloud = generate_word_cloud(display_df['policy_text'])
-    st.image(wordcloud, caption="Combined Word Cloud")
+    wordcloud = generate_word_cloud(display_df['policy_text'],"Combined Policies")
+    st.image(wordcloud, caption="Combined Word Cloud for all Policies")
 
 
 
