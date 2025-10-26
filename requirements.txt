@@ -15,5 +15,3 @@ statistics
 spacy
 pyLDAvis
 corextopic
-itertools
-striprtf
