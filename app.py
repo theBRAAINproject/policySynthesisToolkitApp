@@ -249,7 +249,7 @@ def compute_corpus_metrics(df: pd.DataFrame) -> pd.DataFrame:
         rows.append(row)
     return pd.DataFrame(rows)
 
-def generate_word_cloud(texts: pd.Series) -> np.ndarray:
+def generate_word_cloud(texts: pd.Series):
     from wordcloud import WordCloud, STOPWORDS
     combined_text = " ".join(texts.astype(str).tolist())
     # extend stopwords with some common artifacts from scraped policies
@@ -259,11 +259,14 @@ def generate_word_cloud(texts: pd.Series) -> np.ndarray:
     wc = WordCloud(width=1200, height=600, background_color='white',
                    stopwords=stopwords, collocations=False).generate(combined_text)
 
-    plt.figure(figsize=(14, 7))
-    plt.imshow(wc, interpolation='bilinear')
-    plt.axis('off')
-    plt.title(f'Combined Word Cloud for All Policies', fontsize=16)
-    plt.show()
+    fig, ax = plt.subplots(figsize=(14, 7))
+    ax.imshow(wc, interpolation='bilinear')
+    ax.axis('off')
+    ax.set_title('Combined Word Cloud for All Policies', fontsize=16)
+    
+    # Display in streamlit
+    st.pyplot(fig)
+    plt.close(fig)
 
     # allow download as image
     buf = io.BytesIO()
@@ -336,7 +339,8 @@ if mode == "Analyse":
     sel_df = df[df['university'] == uni_choice]
 
     if sel_df.empty:
-        st.warning("Selected university not found in dataset.")
+        st.warning(" ")
+        # st.warning("Selected university not found in dataset.")
     else:
         sel_row = sel_df.iloc[0]
         st.subheader(f"{uni_choice}")
@@ -409,9 +413,8 @@ elif mode == "Explore":
             st.download_button("Download metrics (CSV)", data=metrics_df.to_csv(index=False).encode('utf-8'), file_name="corpus_metrics.csv", mime="text/csv")
 
     st.subheader("Combined word cloud")
-    if len(display_df) == 0:
-        st.info("No policies available for word cloud.")
-    else:
+        # Generate and display word cloud
+        generate_word_cloud(display_df['policy_text'])
         # Generate and display word cloud
         wordcloud = generate_word_cloud(display_df['policy_text'])
         st.image(wordcloud, caption="Combined Word Cloud")
