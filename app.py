@@ -268,10 +268,10 @@ def generate_word_cloud(texts: pd.Series, name):
     st.pyplot(fig)
     plt.close(fig)
 
-    # allow download as image
-    buf = io.BytesIO()
-    wc.to_image().save(buf, format='PNG')
-    st.download_button(name, buf.getvalue(), "wordcloud.png")
+    # # allow download as image
+    # buf = io.BytesIO()
+    # wc.to_image().save(buf, format='PNG')
+    # st.download_button("download", buf.getvalue(), "wordcloud.png")
 
 #------------------------------------------------------------------------------------------------
 # MAIN-------------------------------------------------------------------------------------------
