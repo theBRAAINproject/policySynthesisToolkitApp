@@ -312,11 +312,9 @@ mode = st.sidebar.radio("Mode", options=["About", "Explore", "Analyse", "Upload"
 # # ANALYSE------------------------------------------------------------------------------------------
 if mode == "Analyse":
     st.text("select university to analyze")
-    # uni_choice = st.selectbox("Choose university", options=["All universities"] + df['university'].tolist())
-
 
     # # prepare display_df for listing/searching (same logic as before)
-    # display_df = df.copy()
+    display_df = df.copy()
     # if 'policy_text' in display_df.columns:
     #     display_df['words'] = display_df['policy_text'].apply(lambda t: len(re.findall(r"\w+", str(t))))
     #     display_df['chars'] = display_df['policy_text'].apply(lambda t: len(str(t)))
@@ -325,13 +323,15 @@ if mode == "Analyse":
     #     display_df['flesch_reading_ease'] = display_df['policy_text'].apply(lambda t: textstat.flesch_reading_ease(str(t)))     
 
 
-
     # Sidebar: select a university (or All)
-    uni_options = ["All universities"] + display_df['university'].tolist()
-    uni_choice = st.selectbox("Choose university to view", options=uni_options, index=0)
+    # uni_choice = st.selectbox("Choose university", options=["All universities"] + df['university'].tolist())
 
-    
+
+    uni_options = "" + display_df['university'].tolist()
+    # uni_options = ["All universities"] + display_df['university'].tolist()
+    uni_choice = st.selectbox("Choose university to view", options=uni_options, index=0)    
     sel_df = df[df['university'] == uni_choice]
+    
     if sel_df.empty:
         st.warning("Selected university not found in dataset.")
     else:
