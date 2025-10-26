@@ -10,7 +10,6 @@ docx
 textstat
 wordcloud
 matplotlib 
-rtf_to_text
 extatistic
 statistics
 spacy
