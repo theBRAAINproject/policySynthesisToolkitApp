@@ -276,6 +276,29 @@ def generate_word_cloud(texts: pd.Series, name):
     # wc.to_image().save(buf, format='PNG')
     # st.download_button("download", buf.getvalue(), "wordcloud.png")
 
+
+anchors_old = [
+        ["ethics", "ethical", "fair"],               # Topic 1: Ethics
+        ["assessment", "exam", "grading", "quiz"],   # Topic 2: Assessment
+        ["privacy", "security"],                     # Topic 3: Data Privacy
+        ["student", "staff", "faculty"],             # Topic 4: Stakeholders
+        ["inclusion", "equity", "accessibility"]   # Topic 5: Inclusivity
+    ]
+
+alexes_3_discourses = [
+        ["Usability", "adoption", "readiness", "development"],
+        ["Fair", "compliance", "ethical", "risk", "biases", "marginalise"],
+        ["Effective", "Measure", "Performance", "facilitate", "teaching"]
+    ]
+topics_from_thematic_analysis = [
+        ["resources", "training",],
+        ["disability", "accessible"],
+        ["acknowledge", "cite", "reference"],
+        ["appropriate", "allowed", "ethical", "transparency", "use", "integrity"],
+        ["risk", "privacy", "error", "inaccurate", "hallucination", "copyright" ],
+        ["misconduct"],
+        ["detection", "plagiarism"]
+    ]
 #------------------------------------------------------------------------------------------------
 # MAIN-------------------------------------------------------------------------------------------
 # Streamlit App Configuration
@@ -377,7 +400,7 @@ if mode == "Explore":
     # st.image(wordcloud, caption="Combined Word Cloud for all Policies")
 
 
-    policies = df['Policy Text']
+    policies = df['policy_text']
     # Split policies into equal-length chunks (e.g., 50 words)
     opt_chunk_size=60
     chunk_size=opt_chunk_size
@@ -398,28 +421,7 @@ if mode == "Explore":
     doc_term_matrix = vectorizer.fit_transform(chunks)
     words = vectorizer.get_feature_names_out()
 
-    anchors_old = [
-        ["ethics", "ethical", "fair"],               # Topic 1: Ethics
-        ["assessment", "exam", "grading", "quiz"],   # Topic 2: Assessment
-        ["privacy", "security"],                     # Topic 3: Data Privacy
-        ["student", "staff", "faculty"],             # Topic 4: Stakeholders
-        ["inclusion", "equity", "accessibility"]   # Topic 5: Inclusivity
-    ]
 
-    alexes_3_discourses = [
-        ["Usability", "adoption", "readiness", "development"],
-        ["Fair", "compliance", "ethical", "risk", "biases", "marginalise"],
-        ["Effective", "Measure", "Performance", "facilitate", "teaching"]
-    ]
-    topics_from_thematic_analysis = [
-        ["resources", "training",],
-        ["disability", "accessible"],
-        ["acknowledge", "cite", "reference"],
-        ["appropriate", "allowed", "ethical", "transparency", "use", "integrity"],
-        ["risk", "privacy", "error", "inaccurate", "hallucination", "copyright" ],
-        ["misconduct"],
-        ["detection", "plagiarism"]
-    ]
     anchors = topics_from_thematic_analysis
     n_topics = len(anchors)+1
     # n_topics=14
@@ -532,7 +534,42 @@ elif mode == "Analyse":
         wordcloud = generate_word_cloud(sel_df['policy_text'], name=uni_choice)
 
     idx=sel_row.name  # get index of selected row
-    
+
+
+    policies = df['policy_text']
+    # Split policies into equal-length chunks (e.g., 50 words)
+    opt_chunk_size=60
+    chunk_size=opt_chunk_size
+    print(f"Using chunk size = {chunk_size} words")
+    # chunk_size=100 --- IGNORE ---
+
+
+    def chunk_policy(text, chunk_size):
+        words = text.split()
+        return [' '.join(words[i:i+chunk_size]) for i in range(0, len(words), chunk_size)]
+
+    chunks = []
+
+    for policy in policies:
+        chunks.extend(chunk_policy(policy, chunk_size))
+
+    # Prepare document-term matrix for chunks
+    vectorizer = CountVectorizer(stop_words='english')
+    doc_term_matrix = vectorizer.fit_transform(chunks)
+    words = vectorizer.get_feature_names_out()
+
+    anchors = topics_from_thematic_analysis
+    n_topics = len(anchors)+1
+    # n_topics=14
+    corex_model = ct.Corex(n_hidden=n_topics, words=words, seed=42)
+
+
+
+    corex_model.fit(doc_term_matrix, words=words, anchors=anchors, anchor_strength=5)
+
+
+    n_topics=len(anchors)+1
+    corex_topics = [f'CorEx_topic_{i}' for i in range(n_topics)]
     # CorEx topic values for this policy (uses existing CorEx_topic_* columns)
     corex_topic_cols = corex_topics  # provided in notebook as a list of column names
     corex_vals = df.loc[idx, corex_topic_cols].astype(float).values
