@@ -487,15 +487,14 @@ else: #about
     Developed as part of the the BRA(AI)N Project (Building Resilience and Accountability in Artificial Intelligence Navigation) 
     """)
     # st.expander("About BRA(AI)N Project", expanded=False, icon=None, width="stretch")
-    with st.expander(About BRA(AI)N Project"):
+    with st.expander("About BRA(AI)N Project"):
     st.write('''
-Title: BRA(AI)N - Building Resilience and Accountability in Artificial Intelligence Navigation
+BRA(AI)N - Building Resilience and Accountability in Artificial Intelligence Navigation
 
 Funder(s): UKRI EPSRC and AI Security Institute (AISI)
-
 Start Date: February 2025
 End Date: February 2026
-Status: Current
+
 
 *Overview*
 This research project seeks to advance understanding of artificial intelligence (AI) and inform educational policy by examining the role of Generative Artificial Intelligence (GenAI) in UK Higher Education (HE). With a focus on technologies such as ChatGPT and DeekSeek, the project explores how these tools are being embedded into academic practice. It considers not only their potential advantages and risks but also the preparedness and resilience of users navigating this evolving digital landscape. At its core, the project is committed to producing robust, evidence-based insights that support the ethical, effective and responsible integration of AI across the HE sector. The findings will be presented in a detailed report and shared with key stakeholders, including universities and relevant government departments. To extend its reach and impact, the study will also generate peer-reviewed academic publications, contributing to ongoing scholarly discussions and future policy development.
