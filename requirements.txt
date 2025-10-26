@@ -18,3 +18,4 @@ pyLDAvis
 corextopic
 pprint
 itertools
+striprtf
