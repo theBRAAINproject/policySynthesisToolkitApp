@@ -10,7 +10,7 @@ import io
 import re
 from pathlib import Path
 from typing import Optional, Tuple, List, Dict
-
+from wordcloud import WordCloud, STOPWORDS
 
 from corextopic import corextopic as ct
 from sklearn.feature_extraction.text import CountVectorizer
@@ -254,7 +254,6 @@ def compute_corpus_metrics(df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 def generate_word_cloud(texts: pd.Series, name):
-    from wordcloud import WordCloud, STOPWORDS
     combined_text = " ".join(texts.astype(str).tolist())
     # extend stopwords with some common artifacts from scraped policies
     stopwords = set(STOPWORDS)
@@ -377,7 +376,10 @@ if mode == "Explore":
     wordcloud = generate_word_cloud(display_df['policy_text'],"Combined Policies")
     # st.image(wordcloud, caption="Combined Word Cloud for all Policies")
 
+
+    policies = df['Policy Text']
     # Split policies into equal-length chunks (e.g., 50 words)
+    opt_chunk_size=60
     chunk_size=opt_chunk_size
     print(f"Using chunk size = {chunk_size} words")
     # chunk_size=100 --- IGNORE ---
@@ -418,11 +420,12 @@ if mode == "Explore":
         ["misconduct"],
         ["detection", "plagiarism"]
     ]
+    anchors = topics_from_thematic_analysis
     n_topics = len(anchors)+1
     # n_topics=14
     corex_model = ct.Corex(n_hidden=n_topics, words=words, seed=42)
 
-    anchors = topics_from_thematic_analysis
+
 
     corex_model.fit(doc_term_matrix, words=words, anchors=anchors, anchor_strength=5)
     # corex_model.fit(doc_term_matrix, words=words)
@@ -447,9 +450,9 @@ if mode == "Explore":
 
     # Add topic distribution to df1
     for i in range(n_topics):
-        df1[f'CorEx_topic_{i}'] = corex_policy_topic_means[f'CorEx_topic_{i}'].values
+        df[f'CorEx_topic_{i}'] = corex_policy_topic_means[f'CorEx_topic_{i}'].values
 
-    print(df1[[f'CorEx_topic_{i}' for i in range(n_topics)]].head())
+    print(df[[f'CorEx_topic_{i}' for i in range(n_topics)]].head())
 
 
 
@@ -528,11 +531,12 @@ elif mode == "Analyse":
     # Word cloud for selected university
         wordcloud = generate_word_cloud(sel_df['policy_text'], name=uni_choice)
 
+    idx=sel_row.name  # get index of selected row
     
     # CorEx topic values for this policy (uses existing CorEx_topic_* columns)
     corex_topic_cols = corex_topics  # provided in notebook as a list of column names
-    corex_vals = df1.loc[idx, corex_topic_cols].astype(float).values
-    print("CorEx topic values (from df1):")
+    corex_vals = df.loc[idx, corex_topic_cols].astype(float).values
+    print("CorEx topic values (from df):")
     for i, v in enumerate(corex_vals):
         print(f"  {corex_topic_cols[i]}: {v:.4f}")
     print()
