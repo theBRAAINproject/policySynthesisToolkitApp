@@ -10,7 +10,7 @@ docx
 textstat
 wordcloud
 matplotlib 
-extatistic
+textatistic
 statistics
 spacy
 sklearn
