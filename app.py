@@ -318,60 +318,9 @@ else:
 mode = st.sidebar.radio("Mode", options=["About", "Explore", "Analyse", "Upload"], index=0)
 
 
-# #------------------------------------------------------------------------------------------------
-# # ANALYSE------------------------------------------------------------------------------------------
-if mode == "Analyse":
-    st.text("select university to analyze")
-
-    # # prepare display_df for listing/searching (same logic as before)
-    display_df = df.copy()
-    # if 'policy_text' in display_df.columns:
-    #     display_df['words'] = display_df['policy_text'].apply(lambda t: len(re.findall(r"\w+", str(t))))
-    #     display_df['chars'] = display_df['policy_text'].apply(lambda t: len(str(t)))
-    #     display_df['avg_word_length'] = display_df['chars'] / display_df['words'].replace(0, np.nan)
-    #     display_df['flesch_kincaid'] = display_df['policy_text'].apply(lambda t: textstat.flesch_kincaid_grade(str(t)))
-    #     display_df['flesch_reading_ease'] = display_df['policy_text'].apply(lambda t: textstat.flesch_reading_ease(str(t)))     
-
-
-    # Sidebar: select a university (or All)
-    # uni_choice = st.selectbox("Choose university", options=["All universities"] + df['university'].tolist())
-
-
-    uni_options = [""] + display_df['university'].tolist()
-    # uni_options = ["All universities"] + display_df['university'].tolist()
-    uni_choice = st.selectbox("Choose university to view", options=uni_options, index=0)    
-    sel_df = df[df['university'] == uni_choice]
-
-    if sel_df.empty:
-        st.warning(" ")
-        # st.warning("Selected university not found in dataset.")
-    else:
-        sel_row = sel_df.iloc[0]
-        st.subheader(f"{uni_choice}")
-        if sel_row.get('url'):
-            st.write(sel_row.get('url'))
-            
-        col1, col2 = st.columns(2)
-            
-        with col1:
-            st.markdown("**Raw policy text**")
-            st.text_area("Raw policy text", value=sel_row.get('policy_text',''), height=300)
-            
-        with col2:
-            st.markdown("**Metrics**")
-            bs = basic_stats(str(sel_row.get('policy_text','')))
-            rd = readability_metrics(str(sel_row.get('policy_text','')))
-            st.write(pd.DataFrame([ {**bs, **rd} ]).T.rename(columns={0:"value"}))
-    
-    # Word cloud for selected university
-        wordcloud = generate_word_cloud(sel_df['policy_text'], name=uni_choice)
-
-
- 
-
 #------------------------------------------------------------------------------------------------
 # EXPLORE------------------------------------------------------------------------------------------
-elif mode == "Explore":
+if mode == "Explore":
     st.text("Exploring policies")
     # prepare display_df for listing/searching (same logic as before)
     display_df = df.copy()
@@ -531,6 +480,108 @@ elif mode == "Explore":
 
 
 
+# #------------------------------------------------------------------------------------------------
+# # ANALYSE------------------------------------------------------------------------------------------
+elif mode == "Analyse":
+    st.text("select university to analyze")
+
+    # # prepare display_df for listing/searching (same logic as before)
+    display_df = df.copy()
+    # if 'policy_text' in display_df.columns:
+    #     display_df['words'] = display_df['policy_text'].apply(lambda t: len(re.findall(r"\w+", str(t))))
+    #     display_df['chars'] = display_df['policy_text'].apply(lambda t: len(str(t)))
+    #     display_df['avg_word_length'] = display_df['chars'] / display_df['words'].replace(0, np.nan)
+    #     display_df['flesch_kincaid'] = display_df['policy_text'].apply(lambda t: textstat.flesch_kincaid_grade(str(t)))
+    #     display_df['flesch_reading_ease'] = display_df['policy_text'].apply(lambda t: textstat.flesch_reading_ease(str(t)))     
+
+
+    # Sidebar: select a university (or All)
+    # uni_choice = st.selectbox("Choose university", options=["All universities"] + df['university'].tolist())
+
+
+    uni_options = [""] + display_df['university'].tolist()
+    # uni_options = ["All universities"] + display_df['university'].tolist()
+    uni_choice = st.selectbox("Choose university to view", options=uni_options, index=0)    
+    sel_df = df[df['university'] == uni_choice]
+
+    if sel_df.empty:
+        st.warning(" ")
+        # st.warning("Selected university not found in dataset.")
+    else:
+        sel_row = sel_df.iloc[0]
+        st.subheader(f"{uni_choice}")
+        if sel_row.get('url'):
+            st.write(sel_row.get('url'))
+            
+        col1, col2 = st.columns(2)
+            
+        with col1:
+            st.markdown("**Raw policy text**")
+            st.text_area("Raw policy text", value=sel_row.get('policy_text',''), height=300)
+            
+        with col2:
+            st.markdown("**Metrics**")
+            bs = basic_stats(str(sel_row.get('policy_text','')))
+            rd = readability_metrics(str(sel_row.get('policy_text','')))
+            st.write(pd.DataFrame([ {**bs, **rd} ]).T.rename(columns={0:"value"}))
+    
+    # Word cloud for selected university
+        wordcloud = generate_word_cloud(sel_df['policy_text'], name=uni_choice)
+
+    
+    # CorEx topic values for this policy (uses existing CorEx_topic_* columns)
+    corex_topic_cols = corex_topics  # provided in notebook as a list of column names
+    corex_vals = df1.loc[idx, corex_topic_cols].astype(float).values
+    print("CorEx topic values (from df1):")
+    for i, v in enumerate(corex_vals):
+        print(f"  {corex_topic_cols[i]}: {v:.4f}")
+    print()
+
+            # Print top words for each CorEx topic from the fitted corex_model (if available)
+    if 'corex_model' in globals():
+        print("Top words per CorEx topic:")
+        for i, topic in enumerate(corex_model.get_topics(n_words=8)):
+            top_words = [w for w, _, _ in topic]
+            print(f"  Topic {i}: {', '.join(top_words)}")
+        print()
+
+            # Pie chart of CorEx topic distribution for this policy (include first word of each topic)
+    plt.figure(figsize=(6,6))
+    if corex_vals.sum() == 0:
+        # no topics matched -- show a single grey slice
+        plt.pie([1], labels=['No matching CorEx topics'], colors=['lightgrey'], autopct='%1.1f%%', startangle=140)
+    else:
+        # try to get the first word for each CorEx topic from the fitted model
+        first_words = []
+        if 'corex_model' in globals():
+            topics = corex_model.get_topics(n_words=1)
+                    # topics is a list where each element is a list/tuple of (word, score, ...)
+            for t in topics[:len(corex_vals)]:
+                first_words.append(t[0][0] if t and len(t) > 0 else '')
+        else:
+            first_words = [''] * len(corex_vals)
+
+        # build labels with the top 3 words for each CorEx topic (fallback to existing first_words)
+        if 'corex_model' in globals():
+            topics_top3 = corex_model.get_topics(n_words=5)
+            label_words = []
+            for t in topics_top3[:len(corex_vals)]:
+                if t:
+                            # each t is list of tuples like (word, score, ...)
+                    words = [w for w, *rest in t][:5]
+                    label_words.append(', '.join(words))
+                else:
+                    label_words.append('')
+        else:
+            label_words = [fw or '' for fw in first_words]
+
+        labels = [f"Topic {i}: ({label_words[i]})" if label_words[i] else f"Topic {i}" for i in range(len(corex_vals))]
+        plt.pie(corex_vals, labels=labels, autopct='%1.1f%%', startangle=140)
+    plt.title(f"CorEx topic distribution for policy {idx}")
+    plt.show()
+
+ 
+
 
 
 
@@ -609,56 +660,6 @@ elif mode == "Upload":
             st.download_button("Download similarity table (CSV)", data=csv, file_name="similarity_results.csv", mime="text/csv")
 
 
-            # CorEx topic values for this policy (uses existing CorEx_topic_* columns)
-            corex_topic_cols = corex_topics  # provided in notebook as a list of column names
-            corex_vals = df1.loc[idx, corex_topic_cols].astype(float).values
-            print("CorEx topic values (from df1):")
-            for i, v in enumerate(corex_vals):
-                print(f"  {corex_topic_cols[i]}: {v:.4f}")
-            print()
-
-            # Print top words for each CorEx topic from the fitted corex_model (if available)
-            if 'corex_model' in globals():
-                print("Top words per CorEx topic:")
-                for i, topic in enumerate(corex_model.get_topics(n_words=8)):
-                    top_words = [w for w, _, _ in topic]
-                    print(f"  Topic {i}: {', '.join(top_words)}")
-                print()
-
-            # Pie chart of CorEx topic distribution for this policy (include first word of each topic)
-            plt.figure(figsize=(6,6))
-            if corex_vals.sum() == 0:
-                # no topics matched -- show a single grey slice
-                plt.pie([1], labels=['No matching CorEx topics'], colors=['lightgrey'], autopct='%1.1f%%', startangle=140)
-            else:
-                # try to get the first word for each CorEx topic from the fitted model
-                first_words = []
-                if 'corex_model' in globals():
-                    topics = corex_model.get_topics(n_words=1)
-                    # topics is a list where each element is a list/tuple of (word, score, ...)
-                    for t in topics[:len(corex_vals)]:
-                        first_words.append(t[0][0] if t and len(t) > 0 else '')
-                else:
-                    first_words = [''] * len(corex_vals)
-
-                # build labels with the top 3 words for each CorEx topic (fallback to existing first_words)
-                if 'corex_model' in globals():
-                    topics_top3 = corex_model.get_topics(n_words=5)
-                    label_words = []
-                    for t in topics_top3[:len(corex_vals)]:
-                        if t:
-                            # each t is list of tuples like (word, score, ...)
-                            words = [w for w, *rest in t][:5]
-                            label_words.append(', '.join(words))
-                        else:
-                            label_words.append('')
-                else:
-                    label_words = [fw or '' for fw in first_words]
-
-                labels = [f"Topic {i}: ({label_words[i]})" if label_words[i] else f"Topic {i}" for i in range(len(corex_vals))]
-                plt.pie(corex_vals, labels=labels, autopct='%1.1f%%', startangle=140)
-            plt.title(f"CorEx topic distribution for policy {idx}")
-            plt.show()
 
 
 
