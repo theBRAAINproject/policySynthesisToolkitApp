@@ -414,10 +414,10 @@ elif mode == "Explore":
 
     st.subheader("Combined word cloud")
         # Generate and display word cloud
-        generate_word_cloud(display_df['policy_text'])
+    generate_word_cloud(display_df['policy_text'])
         # Generate and display word cloud
-        wordcloud = generate_word_cloud(display_df['policy_text'])
-        st.image(wordcloud, caption="Combined Word Cloud")
+    wordcloud = generate_word_cloud(display_df['policy_text'])
+    st.image(wordcloud, caption="Combined Word Cloud")
 
 
 
