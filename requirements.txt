@@ -9,3 +9,13 @@ PyPDF2
 docx 
 textstat
 wordcloud
+matplotlib 
+rtf_to_text
+extatistic
+statistics
+spacy
+sklearn
+pyLDAvis
+corextopic
+pprint
+itertools

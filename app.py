@@ -327,11 +327,11 @@ if mode == "Analyse":
     # uni_choice = st.selectbox("Choose university", options=["All universities"] + df['university'].tolist())
 
 
-    uni_options = "" + display_df['university'].tolist()
+    uni_options = [""] + display_df['university'].tolist()
     # uni_options = ["All universities"] + display_df['university'].tolist()
     uni_choice = st.selectbox("Choose university to view", options=uni_options, index=0)    
     sel_df = df[df['university'] == uni_choice]
-    
+
     if sel_df.empty:
         st.warning("Selected university not found in dataset.")
     else:
