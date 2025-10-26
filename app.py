@@ -257,7 +257,7 @@ st.sidebar.title("Gen-AI Policy Explorer")
 # Streamlit App Configuration
 st.set_page_config(page_title="Gen-AI Policy Explorer", layout="wide", initial_sidebar_state="expanded")
 
-applogo = "/img/pstapplogo.png" 
+applogo = "img/pstapplogo.png" 
 if os.path.exists(applogo):
     st.sidebar.image(applogo, width=70)
 
