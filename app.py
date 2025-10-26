@@ -11,6 +11,9 @@ import re
 from pathlib import Path
 from typing import Optional, Tuple, List, Dict
 
+import matplotlib.pyplot as plt
+
+
 # Optional libraries (graceful fallback)
 try:
     from sklearn.feature_extraction.text import TfidfVectorizer
