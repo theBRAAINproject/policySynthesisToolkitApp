@@ -11,6 +11,10 @@ import re
 from pathlib import Path
 from typing import Optional, Tuple, List, Dict
 
+
+from corextopic import corextopic as ct
+from sklearn.feature_extraction.text import CountVectorizer
+import numpy as np
 import matplotlib.pyplot as plt
 
 
@@ -361,6 +365,8 @@ if mode == "Analyse":
     
     # Word cloud for selected university
         wordcloud = generate_word_cloud(sel_df['policy_text'], name=uni_choice)
+
+
  
 
 #------------------------------------------------------------------------------------------------
@@ -421,6 +427,110 @@ elif mode == "Explore":
         # Generate and display word cloud
     wordcloud = generate_word_cloud(display_df['policy_text'],"Combined Policies")
     # st.image(wordcloud, caption="Combined Word Cloud for all Policies")
+
+    # Split policies into equal-length chunks (e.g., 50 words)
+    chunk_size=opt_chunk_size
+    print(f"Using chunk size = {chunk_size} words")
+    # chunk_size=100 --- IGNORE ---
+
+
+    def chunk_policy(text, chunk_size):
+        words = text.split()
+        return [' '.join(words[i:i+chunk_size]) for i in range(0, len(words), chunk_size)]
+
+    chunks = []
+    for policy in policies:
+        chunks.extend(chunk_policy(policy, chunk_size))
+
+    # Prepare document-term matrix for chunks
+    vectorizer = CountVectorizer(stop_words='english')
+    doc_term_matrix = vectorizer.fit_transform(chunks)
+    words = vectorizer.get_feature_names_out()
+
+    anchors_old = [
+        ["ethics", "ethical", "fair"],               # Topic 1: Ethics
+        ["assessment", "exam", "grading", "quiz"],   # Topic 2: Assessment
+        ["privacy", "security"],                     # Topic 3: Data Privacy
+        ["student", "staff", "faculty"],             # Topic 4: Stakeholders
+        ["inclusion", "equity", "accessibility"]   # Topic 5: Inclusivity
+    ]
+
+    alexes_3_discourses = [
+        ["Usability", "adoption", "readiness", "development"],
+        ["Fair", "compliance", "ethical", "risk", "biases", "marginalise"],
+        ["Effective", "Measure", "Performance", "facilitate", "teaching"]
+    ]
+    topics_from_thematic_analysis = [
+        ["resources", "training",],
+        ["disability", "accessible"],
+        ["acknowledge", "cite", "reference"],
+        ["appropriate", "allowed", "ethical", "transparency", "use", "integrity"],
+        ["risk", "privacy", "error", "inaccurate", "hallucination", "copyright" ],
+        ["misconduct"],
+        ["detection", "plagiarism"]
+    ]
+    n_topics = len(anchors)+1
+    # n_topics=14
+    corex_model = ct.Corex(n_hidden=n_topics, words=words, seed=42)
+
+    anchors = topics_from_thematic_analysis
+
+    corex_model.fit(doc_term_matrix, words=words, anchors=anchors, anchor_strength=5)
+    # corex_model.fit(doc_term_matrix, words=words)
+
+    # Print top words for each topic
+    for i, topic in enumerate(corex_model.get_topics(n_words=10)):
+        print(f"Topic {i+1}: {[w for w, _, _ in topic]}")
+
+    # Get topic distribution for each chunk
+    corex_topic_dist = corex_model.transform(doc_term_matrix)
+
+    # Aggregate chunk-level topic assignments to policy-level by mean
+    chunks_per_policy = [len(chunk_policy(policy, chunk_size)) for policy in policies]
+    chunk_indices = np.repeat(np.arange(len(policies)), chunks_per_policy)
+
+    # Create a DataFrame for chunk topic assignments
+    corex_chunk_df = pd.DataFrame(corex_topic_dist, columns=[f'CorEx_topic_{i}' for i in range(n_topics)])
+    corex_chunk_df['policy_idx'] = chunk_indices
+
+    # Compute mean topic assignment for each policy
+    corex_policy_topic_means = corex_chunk_df.groupby('policy_idx').mean()
+
+    # Add topic distribution to df1
+    for i in range(n_topics):
+        df1[f'CorEx_topic_{i}'] = corex_policy_topic_means[f'CorEx_topic_{i}'].values
+
+    print(df1[[f'CorEx_topic_{i}' for i in range(n_topics)]].head())
+
+
+
+
+    # # Show policies 0 to 19 (indices 0 to 19)
+    # start_idx = 0
+    # num2show = 20
+    # end_idx = start_idx + num2show - 1
+
+    # corex_topics = [f'CorEx_topic_{i}' for i in range(n_topics)]
+    # corex_topic_vals = df1.loc[start_idx:end_idx, corex_topics].values
+
+    # policy_labels = [f'Policy {i}' for i in range(start_idx, end_idx+1)]
+    # bar_width = 0.15
+    # x = np.arange(num2show)
+
+    # plt.figure(figsize=(12, 6))
+    # for topic in range(n_topics):
+    #     plt.bar(x + topic * bar_width, corex_topic_vals[:, topic], width=bar_width, label=f'Topic {topic+1}')
+
+    # plt.xticks(x + bar_width * (n_topics-1)/2, policy_labels, rotation=45)
+    # plt.ylabel('CorEx Topic Value')
+    # plt.xlabel('Policy')
+    # plt.title('Bargraph: Policies 0 to 19 vs CorEx Topics')
+    # plt.legend(title='CorEx Topics')
+    # plt.tight_layout()
+    # plt.show()
+
+
+
 
 
 
@@ -497,6 +607,60 @@ elif mode == "Upload":
 
             csv = sim_df.to_csv(index=False).encode('utf-8')
             st.download_button("Download similarity table (CSV)", data=csv, file_name="similarity_results.csv", mime="text/csv")
+
+
+            # CorEx topic values for this policy (uses existing CorEx_topic_* columns)
+            corex_topic_cols = corex_topics  # provided in notebook as a list of column names
+            corex_vals = df1.loc[idx, corex_topic_cols].astype(float).values
+            print("CorEx topic values (from df1):")
+            for i, v in enumerate(corex_vals):
+                print(f"  {corex_topic_cols[i]}: {v:.4f}")
+            print()
+
+            # Print top words for each CorEx topic from the fitted corex_model (if available)
+            if 'corex_model' in globals():
+                print("Top words per CorEx topic:")
+                for i, topic in enumerate(corex_model.get_topics(n_words=8)):
+                    top_words = [w for w, _, _ in topic]
+                    print(f"  Topic {i}: {', '.join(top_words)}")
+                print()
+
+            # Pie chart of CorEx topic distribution for this policy (include first word of each topic)
+            plt.figure(figsize=(6,6))
+            if corex_vals.sum() == 0:
+                # no topics matched -- show a single grey slice
+                plt.pie([1], labels=['No matching CorEx topics'], colors=['lightgrey'], autopct='%1.1f%%', startangle=140)
+            else:
+                # try to get the first word for each CorEx topic from the fitted model
+                first_words = []
+                if 'corex_model' in globals():
+                    topics = corex_model.get_topics(n_words=1)
+                    # topics is a list where each element is a list/tuple of (word, score, ...)
+                    for t in topics[:len(corex_vals)]:
+                        first_words.append(t[0][0] if t and len(t) > 0 else '')
+                else:
+                    first_words = [''] * len(corex_vals)
+
+                # build labels with the top 3 words for each CorEx topic (fallback to existing first_words)
+                if 'corex_model' in globals():
+                    topics_top3 = corex_model.get_topics(n_words=5)
+                    label_words = []
+                    for t in topics_top3[:len(corex_vals)]:
+                        if t:
+                            # each t is list of tuples like (word, score, ...)
+                            words = [w for w, *rest in t][:5]
+                            label_words.append(', '.join(words))
+                        else:
+                            label_words.append('')
+                else:
+                    label_words = [fw or '' for fw in first_words]
+
+                labels = [f"Topic {i}: ({label_words[i]})" if label_words[i] else f"Topic {i}" for i in range(len(corex_vals))]
+                plt.pie(corex_vals, labels=labels, autopct='%1.1f%%', startangle=140)
+            plt.title(f"CorEx topic distribution for policy {idx}")
+            plt.show()
+
+
 
     else:
         st.info("Upload a policy in the sidebar to compare it with corpus policies.")
