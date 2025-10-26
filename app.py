@@ -434,7 +434,7 @@ if mode == "Explore":
 
     # Print top words for each topic
     for i, topic in enumerate(corex_model.get_topics(n_words=10)):
-        print(f"Topic {i+1}: {[w for w, _, _ in topic]}")
+        st.text(f"Topic {i+1}: {[w for w, _, _ in topic]}")
 
     # Get topic distribution for each chunk
     corex_topic_dist = corex_model.transform(doc_term_matrix)
@@ -454,7 +454,7 @@ if mode == "Explore":
     for i in range(n_topics):
         df[f'CorEx_topic_{i}'] = corex_policy_topic_means[f'CorEx_topic_{i}'].values
 
-    print(df[[f'CorEx_topic_{i}' for i in range(n_topics)]].head())
+    st.text(df[[f'CorEx_topic_{i}' for i in range(n_topics)]].head())
 
 
 
