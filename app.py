@@ -246,6 +246,27 @@ def compute_corpus_metrics(df: pd.DataFrame) -> pd.DataFrame:
         rows.append(row)
     return pd.DataFrame(rows)
 
+def generate_word_cloud(texts: pd.Series) -> np.ndarray:
+    from wordcloud import WordCloud, STOPWORDS
+    combined_text = " ".join(texts.astype(str).tolist())
+    # extend stopwords with some common artifacts from scraped policies
+    stopwords = set(STOPWORDS)
+    stopwords.update(['https', 'http', 'www', 'com', 'org', 'edu', 'page', 'policy', 'policytext', 'generative', 'may', 'take', 'top'])
+
+    wc = WordCloud(width=1200, height=600, background_color='white',
+                   stopwords=stopwords, collocations=False).generate(combined_text)
+
+    plt.figure(figsize=(14, 7))
+    plt.imshow(wc, interpolation='bilinear')
+    plt.axis('off')
+    plt.title(f'Combined Word Cloud for All Policies', fontsize=16)
+    plt.show()
+
+    # allow download as image
+    buf = io.BytesIO()
+    wc.to_image().save(buf, format='PNG')
+    st.download_button("Download Word Cloud", buf.getvalue(), "wordcloud.png")
+
 #------------------------------------------------------------------------------------------------
 # MAIN-------------------------------------------------------------------------------------------
 # Streamlit App Configuration
@@ -288,21 +309,48 @@ mode = st.sidebar.radio("Mode", options=["About", "Explore", "Analyse", "Upload"
 
 
 # #------------------------------------------------------------------------------------------------
-# # EXPLORE------------------------------------------------------------------------------------------
+# # ANALYSE------------------------------------------------------------------------------------------
 if mode == "Analyse":
     st.text("select university to analyze")
-    uni_choice = st.selectbox("Choose university", options=["All universities"] + df['university'].tolist())
+    # uni_choice = st.selectbox("Choose university", options=["All universities"] + df['university'].tolist())
 
 
-    # prepare display_df for listing/searching (same logic as before)
-    display_df = df.copy()
-    if 'policy_text' in display_df.columns:
-        display_df['words'] = display_df['policy_text'].apply(lambda t: len(re.findall(r"\w+", str(t))))
-        display_df['chars'] = display_df['policy_text'].apply(lambda t: len(str(t)))
-        display_df['avg_word_length'] = display_df['chars'] / display_df['words'].replace(0, np.nan)
-        display_df['flesch_kincaid'] = display_df['policy_text'].apply(lambda t: textstat.flesch_kincaid_grade(str(t)))
-        display_df['flesch_reading_ease'] = display_df['policy_text'].apply(lambda t: textstat.flesch_reading_ease(str(t)))     
+    # # prepare display_df for listing/searching (same logic as before)
+    # display_df = df.copy()
+    # if 'policy_text' in display_df.columns:
+    #     display_df['words'] = display_df['policy_text'].apply(lambda t: len(re.findall(r"\w+", str(t))))
+    #     display_df['chars'] = display_df['policy_text'].apply(lambda t: len(str(t)))
+    #     display_df['avg_word_length'] = display_df['chars'] / display_df['words'].replace(0, np.nan)
+    #     display_df['flesch_kincaid'] = display_df['policy_text'].apply(lambda t: textstat.flesch_kincaid_grade(str(t)))
+    #     display_df['flesch_reading_ease'] = display_df['policy_text'].apply(lambda t: textstat.flesch_reading_ease(str(t)))     
 
+
+
+    # Sidebar: select a university (or All)
+    uni_options = ["All universities"] + display_df['university'].tolist()
+    uni_choice = st.selectbox("Choose university to view", options=uni_options, index=0)
+
+    
+    sel_df = df[df['university'] == uni_choice]
+    if sel_df.empty:
+        st.warning("Selected university not found in dataset.")
+    else:
+        sel_row = sel_df.iloc[0]
+        st.subheader(f"{uni_choice}")
+        if sel_row.get('url'):
+            st.write(sel_row.get('url'))
+            
+        col1, col2 = st.columns(2)
+            
+        with col1:
+            st.markdown("**Raw policy text**")
+            st.text_area("Raw policy text", value=sel_row.get('policy_text',''), height=300)
+            
+        with col2:
+            st.markdown("**Metrics**")
+            bs = basic_stats(str(sel_row.get('policy_text','')))
+            rd = readability_metrics(str(sel_row.get('policy_text','')))
+            st.write(pd.DataFrame([ {**bs, **rd} ]).T.rename(columns={0:"value"}))
 
 
 #------------------------------------------------------------------------------------------------
@@ -333,57 +381,39 @@ elif mode == "Explore":
     
 
 
-    # Sidebar: select a university (or All)
-    uni_options = ["All universities"] + display_df['university'].tolist()
-    uni_choice = st.sidebar.selectbox("Choose university to view", options=uni_options, index=0)
-
-    if uni_choice == "All universities":
-        # Show corpus-level statistics (reuse metrics_df if available)
-
-        st.subheader("Statistics & evaluation overview")
-        if len(metrics_df) == 0:
-            st.info("No corpus metrics available. Add a dataset file to /mnt/data or upload one policy to compare.")
-        else:
-            st.subheader(f"Policies loaded: {len(display_df)}")
-            st.dataframe(display_df[['university', 'words', 'chars']].head(200))
+    st.subheader("Statistics & evaluation overview")
+    if len(metrics_df) == 0:
+        st.info("No corpus metrics available. Add a dataset file to /mnt/data or upload one policy to compare.")
+    else:
+        st.subheader(f"Policies loaded: {len(display_df)}")
+        st.dataframe(display_df[['university', 'words', 'chars']].head(200))
             #basic stats
-            st.markdown("**Basic statistics across universities**")
+        st.markdown("**Basic statistics across universities**")
             # Top longest policies
-            top_long = metrics_df.sort_values("words", ascending=False).head(10)
-            st.write("Top 10 longest (by words):")
-            st.table(top_long[['university','words','chars','flesch_kincaid']].reset_index(drop=True))
+        top_long = metrics_df.sort_values("words", ascending=False).head(10)
+        st.write("Top 10 longest (by words):")
+        st.table(top_long[['university','words','chars','flesch_kincaid']].reset_index(drop=True))
 
             # Keyword aggregation
-            kw_cols = [c for c in metrics_df.columns if c.startswith('kw_')]
-            if kw_cols:
-                kw_sum = metrics_df[kw_cols].sum().sort_values(ascending=False)
-                st.subheader("Keyword mentions across universities (counts)")
-                st.table(kw_sum.rename_axis('keyword').reset_index().rename(columns={0:'count'}))
+        kw_cols = [c for c in metrics_df.columns if c.startswith('kw_')]
+        if kw_cols:
+            kw_sum = metrics_df[kw_cols].sum().sort_values(ascending=False)
+            st.subheader("Keyword mentions across universities (counts)")
+            st.table(kw_sum.rename_axis('keyword').reset_index().rename(columns={0:'count'}))
 
             # Download metrics
+            
             st.download_button("Download metrics (CSV)", data=metrics_df.to_csv(index=False).encode('utf-8'), file_name="corpus_metrics.csv", mime="text/csv")
+
+    st.subheader("Combined word cloud")
+    if len(display_df) == 0:
+        st.info("No policies available for word cloud.")
     else:
-        # Show single-university policy and metrics
-        sel_df = df[df['university'] == uni_choice]
-        if sel_df.empty:
-            st.warning("Selected university not found in dataset.")
-        else:
-            sel_row = sel_df.iloc[0]
-            st.subheader(f"{uni_choice}")
-            if sel_row.get('url'):
-                st.write(sel_row.get('url'))
-            
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                st.markdown("**Raw policy text**")
-                st.text_area("Raw policy text", value=sel_row.get('policy_text',''), height=300)
-            
-            with col2:
-                st.markdown("**Metrics**")
-                bs = basic_stats(str(sel_row.get('policy_text','')))
-                rd = readability_metrics(str(sel_row.get('policy_text','')))
-                st.write(pd.DataFrame([ {**bs, **rd} ]).T.rename(columns={0:"value"}))
+        # Generate and display word cloud
+        wordcloud = generate_word_cloud(display_df['policy_text'])
+        st.image(wordcloud, caption="Combined Word Cloud")
+
+
 
 #-------------------------------------------------------------------------------------------------
 # UPLOAD------------------------------------------------------------------------------------------
