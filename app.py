@@ -358,7 +358,10 @@ if mode == "Analyse":
             bs = basic_stats(str(sel_row.get('policy_text','')))
             rd = readability_metrics(str(sel_row.get('policy_text','')))
             st.write(pd.DataFrame([ {**bs, **rd} ]).T.rename(columns={0:"value"}))
-
+    
+    # Word cloud for selected university
+    wordcloud = generate_word_cloud(sel_df['policy_text'], name=uni_choice)
+    st.image(wordcloud, caption=f"Word Cloud for {uni_choice}")
 
 #------------------------------------------------------------------------------------------------
 # EXPLORE------------------------------------------------------------------------------------------
@@ -417,7 +420,7 @@ elif mode == "Explore":
     # generate_word_cloud(display_df['policy_text'])
         # Generate and display word cloud
     wordcloud = generate_word_cloud(display_df['policy_text'],"Combined Policies")
-    st.image(wordcloud, caption="Combined Word Cloud for all Policies")
+    # st.image(wordcloud, caption="Combined Word Cloud for all Policies")
 
 
 
