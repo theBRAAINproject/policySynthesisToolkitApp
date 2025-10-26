@@ -360,8 +360,8 @@ if mode == "Analyse":
             st.write(pd.DataFrame([ {**bs, **rd} ]).T.rename(columns={0:"value"}))
     
     # Word cloud for selected university
-    wordcloud = generate_word_cloud(sel_df['policy_text'], name=uni_choice)
-    st.image(wordcloud, caption=f"Word Cloud for {uni_choice}")
+        wordcloud = generate_word_cloud(sel_df['policy_text'], name=uni_choice)
+ 
 
 #------------------------------------------------------------------------------------------------
 # EXPLORE------------------------------------------------------------------------------------------
