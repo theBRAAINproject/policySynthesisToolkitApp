@@ -594,7 +594,7 @@ elif mode == "Analyse":
 
 
         # n_topics=len(anchors)+1
-        # corex_topics = [f'CorEx_topic_{i}' for i in range(n_topics)]
+        corex_topics = [f'CorEx_topic_{i}' for i in range(n_topics)]
         # CorEx topic values for this policy (uses existing CorEx_topic_* columns)
         corex_topic_cols = corex_topics  # provided in notebook as a list of column names
         corex_vals = df.loc[idx, corex_topic_cols].astype(float).values
