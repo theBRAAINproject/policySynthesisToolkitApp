@@ -621,10 +621,10 @@ elif mode == "Analyse":
                 <div style='display: flex; flex-direction: column; justify-content: center; 
                             align-items: center; height: 100%; width: 100%; 
                             text-align: center; padding: 1rem; box-sizing: border-box;'>
-                    <p style='font-size: clamp(16px, 1.5vw, 28px);
+                    <p style='font-size: clamp(10px, 1.5vw, 15px);
                             font-weight: 600; 
                             margin-bottom: 0;'>{metric_label}:</p>
-                    <p style='font-size: clamp(40px, 5vw, 80px);
+                    <p style='font-size: clamp(20px, 5vw, 40px);
                             font-weight: 700; 
                             margin-top: 0;
                             line-height: 1;'> {sel_word_count:,} </p>
@@ -704,7 +704,7 @@ elif mode == "Analyse":
                 <div style='display: flex; flex-direction: column; justify-content: center; 
                             align-items: center; height: 100%; width: 100%; 
                             text-align: center; padding: 1rem; box-sizing: border-box;'>
-                    <p style='font-size: clamp(11px, 1.5vw, 15px);
+                    <p style='font-size: clamp(10px, 1.5vw, 15px);
                             font-weight: 600; 
                             margin-bottom: 0;'>{metric_label}:</p>
                     <p style='font-size: clamp(20px, 5vw, 40px);
@@ -785,10 +785,10 @@ elif mode == "Analyse":
                 <div style='display: flex; flex-direction: column; justify-content: center; 
                             align-items: center; height: 100%; width: 100%; 
                             text-align: center; padding: 1rem; box-sizing: border-box;'>
-                    <p style='font-size: clamp(16px, 1.5vw, 28px);
+                    <p style='font-size: clamp(10px, 1.5vw, 15px);
                             font-weight: 600; 
                             margin-bottom: 0;'>{metric_label}:</p>
-                    <p style='font-size: clamp(40px, 5vw, 80px);
+                    <p style='font-size: clamp(20px, 5vw, 40px);
                             font-weight: 700; 
                             margin-top: 0;
                             line-height: 1;'> {sel_reading_ease_fmt} </p>
