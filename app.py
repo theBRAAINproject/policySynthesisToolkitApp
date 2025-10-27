@@ -519,6 +519,12 @@ elif mode == "Analyse":
     else:
         sel_row = sel_df.iloc[0]
         st.subheader(f"{uni_choice}")
+        #if logo of university exists in img/logos/filename.png display it
+        logofilename = sel_row.get('filename','').strip()
+        logo_path = f"img/logos/{logofilename}.png"
+        if os.path.exists(logo_path):
+            st.image(logo_path, width=100)
+
         if sel_row.get('url'):
             st.write("Policy URL:", sel_row.get('url'))
 
