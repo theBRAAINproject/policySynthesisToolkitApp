@@ -20,7 +20,7 @@ from corextopic import corextopic as ct
 from sklearn.feature_extraction.text import CountVectorizer
 import numpy as np
 import matplotlib.pyplot as plt
-# import plotly.express as px
+import plotly.express as px
 import plotly.graph_objects as go
 
 
@@ -453,7 +453,7 @@ if mode == "Explore":
             fig = px.pie(kw_sum, names='keyword', values='count', title='Top Keywords')
             st.plotly_chart(fig)
 
-            
+
             st.download_button("Download metrics (CSV)", data=metrics_df.to_csv(index=False).encode('utf-8'), file_name="corpus_metrics.csv", mime="text/csv")
 
     # st.subheader("Combined word cloud:")
