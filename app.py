@@ -450,7 +450,7 @@ if mode == "Explore":
             # st.subheader("Keyword mentions across universities (counts)")
                 st.table(kw_sum.rename_axis('keyword').reset_index().rename(columns={0:'count'}))
             #show top keywords as a plotly donut chart
-            fig = px.pie(kw_sum, names='keyword', values='count', title='Top Keywords')
+            fig = px.pie(values=kw_sum.values, names=kw_sum.index, title='Top Keywords')
             st.plotly_chart(fig)
 
 
@@ -484,7 +484,7 @@ if mode == "Explore":
             # Add topic distribution to df1
         for i in range(n_topics):
             df[f'CorEx_topic_{i}'] = corex_policy_topic_means[f'CorEx_topic_{i}'].values
-        
+        #show topics as 
         # st.text(df[[f'CorEx_topic_{i}' for i in range(n_topics)]].head())
 
 
