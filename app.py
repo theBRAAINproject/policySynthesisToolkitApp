@@ -609,8 +609,6 @@ elif mode == "Analyse":
                 st.plotly_chart(fig, use_container_width=True)
 
                 
-                # Display in Streamlit
-                st.plotly_chart(fig, use_container_width=True)
                 colE, colF = st.columns([1,5])
                 with colE:
                     st.write("Avg Words/Sentence")
@@ -740,7 +738,8 @@ elif mode == "Analyse":
                         showlegend=True,
                         hovermode='closest'
                     )
-
+                    # Display in Streamlit
+                    st.plotly_chart(fig, use_container_width=True)
 
         # topic modeling with CorEx, pie chart of topic distribution
         anchors = topics_from_thematic_analysis
