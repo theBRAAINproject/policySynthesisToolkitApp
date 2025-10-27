@@ -537,8 +537,212 @@ elif mode == "Analyse":
             bs = basic_stats(str(sel_row.get('policy_text','')))
             rd = readability_metrics(str(sel_row.get('policy_text','')))
             st.write(pd.DataFrame([ {**bs, **rd} ]).T.rename(columns={0:"value"}))
+ 
+
+        with st.expander("General Statistics", expanded=True):
+            colA, colB = st.columns([1,5])
+            with colA:
+                st.write("Word count")
+            with colB:
+                # Calculate word counts
+                all_word_counts = df['policy_text'].apply(lambda t: len(re.findall(r"\w+", str(t)))).values
+                avg_word_count = all_word_counts.mean()
+                sel_word_count = len(re.findall(r"\w+", str(sel_row.get('policy_text',''))))
+                
+                # Get university names for hover labels
+                university_names = df['university'].tolist()
+
+                # Create interactive plot with Plotly instead of Matplotlib
+
+                
+                # Create DataFrame for plotting
+                plot_df = pd.DataFrame({
+                'word_count': all_word_counts,
+                'university': university_names,
+                'y': [0] * len(all_word_counts)
+                })
+                
+                # Create scatter plot
+                fig = go.Figure()
+                
+
+                # Set light gray background
+                fig.update_layout(plot_bgcolor='#EDF1FD', paper_bgcolor='#EDF1FD')
+
+                # Add all universities as dots
+                fig.add_trace(go.Scatter(
+                x=plot_df['word_count'],
+                y=plot_df['y'],
+                mode='markers',
+                marker=dict(color='steelblue', size=8, opacity=0.7),
+                text=plot_df['university'],
+                hovertemplate='<b>%{text}</b><br>Word Count: %{x}<extra></extra>',
+                name='All Universities'
+                ))
+                
+                # Highlight selected university
+                fig.add_trace(go.Scatter(
+                x=[sel_word_count],
+                y=[0],
+                mode='markers',
+                marker=dict(color='red', size=12),
+                text=[uni_choice],
+                hovertemplate='<b>%{text}</b><br>Word Count: %{x}<extra></extra>',
+                name=f'{uni_choice}'
+                ))
+                
+                # Add average line
+                fig.add_vline(x=avg_word_count, line_dash="dash", line_color="orange", 
+                    annotation_text="Average", annotation_position="top")
+                
+                # Update layout
+                fig.update_layout(
+                # title="Policy Word Count Distribution",
+                xaxis_title="Word Count",
+                yaxis=dict(visible=False),
+                height=300,
+                showlegend=True,
+                hovermode='closest'
+                )
+                
+                # Display in Streamlit
+                st.plotly_chart(fig, use_container_width=True)
+
+                
+                # Display in Streamlit
+                st.plotly_chart(fig, use_container_width=True)
+                colE, colF = st.columns([1,5])
+                with colE:
+                    st.write("Avg Words/Sentence")
+                with colF:
+                    # Calculate average words per sentence
+                    all_avg_words = df['policy_text'].apply(lambda t: basic_stats(str(t))['avg_words_per_sentence']).values
+                    avg_avg_words = all_avg_words.mean()
+                    sel_avg_words = basic_stats(str(sel_row.get('policy_text','')))['avg_words_per_sentence']
+                    
+                    # Get university names for hover labels
+                    university_names = df['university'].tolist()
+                    
+                    # Create DataFrame for plotting
+                    plot_df = pd.DataFrame({
+                        'avg_words_per_sentence': all_avg_words,
+                        'university': university_names,
+                        'y': [0] * len(all_avg_words)
+                    })
+                    
+                    # Create scatter plot
+                    fig = go.Figure()
+                    
+                    # Set light yellow background
+                    fig.update_layout(plot_bgcolor='#F8EDFD', paper_bgcolor='#F8EDFD')
+                    
+                    # Add all universities as dots
+                    fig.add_trace(go.Scatter(
+                        x=plot_df['avg_words_per_sentence'],
+                        y=plot_df['y'],
+                        mode='markers',
+                        marker=dict(color='steelblue', size=8, opacity=0.7),
+                        text=plot_df['university'],
+                        hovertemplate='<b>%{text}</b><br>Avg Words/Sentence: %{x:.1f}<extra></extra>',
+                        name='All Universities'
+                    ))
+                    
+                    # Highlight selected university
+                    fig.add_trace(go.Scatter(
+                        x=[sel_avg_words],
+                        y=[0],
+                        mode='markers',
+                        marker=dict(color='red', size=12),
+                        text=[uni_choice],
+                        hovertemplate='<b>%{text}</b><br>Avg Words/Sentence: %{x:.1f}<extra></extra>',
+                        name=f'{uni_choice}'
+                    ))
+                    
+                    # Add average line
+                    fig.add_vline(x=avg_avg_words, line_dash="dash", line_color="orange", 
+                        annotation_text="Average", annotation_position="top")
+                    
+                    # Update layout
+                    fig.update_layout(
+                        # xaxis_title="Average Words per Sentence",
+                        yaxis=dict(visible=False),
+                        height=300,
+                        showlegend=True,
+                        hovermode='closest'
+                    )
+                    
+                    # Display in Streamlit
+                    st.plotly_chart(fig, use_container_width=True)
+
+                
+                colC, colD = st.columns([1,5])
+                with colC:
+                    st.write("Reading Ease")
+                with colD:
+                    # Calculate reading ease scores
+                    if HAS_TEXTSTAT:
+                        all_reading_ease = df['policy_text'].apply(lambda t: textstat.flesch_reading_ease(str(t))).values
+                        avg_reading_ease = all_reading_ease.mean()
+                        sel_reading_ease = textstat.flesch_reading_ease(str(sel_row.get('policy_text','')))
+                    else:
+                        # Fallback values if textstat not available
+                        all_reading_ease = np.random.normal(50, 20, len(df))  # Mock data
+                        avg_reading_ease = all_reading_ease.mean()
+                        sel_reading_ease = 50  # Default value
+                    
+                    # Get university names for hover labels
+                    university_names = df['university'].tolist()
+                    
+                    # Create DataFrame for plotting
+                    plot_df = pd.DataFrame({
+                        'reading_ease': all_reading_ease,
+                        'university': university_names,
+                        'y': [0] * len(all_reading_ease)
+                    })
+                    
+                    # Create scatter plot
+                    fig = go.Figure()
+                    
+                    # Set light gray background
+                    fig.update_layout(plot_bgcolor='#F2FDED', paper_bgcolor='#F2FDED')
+                    
+                    # Add all universities as dots
+                    fig.add_trace(go.Scatter(
+                        x=plot_df['reading_ease'],
+                        y=plot_df['y'],
+                        mode='markers',
+                        marker=dict(color='steelblue', size=8, opacity=0.7),
+                        text=plot_df['university'],
+                        hovertemplate='<b>%{text}</b><br>Reading Ease: %{x:.1f}<extra></extra>',
+                        name='All Universities'
+                    ))
+                    
+                    # Highlight selected university
+                    fig.add_trace(go.Scatter(
+                        x=[sel_reading_ease],
+                        y=[0],
+                        mode='markers',
+                        marker=dict(color='red', size=12),
+                        text=[uni_choice],
+                        hovertemplate='<b>%{text}</b><br>Reading Ease: %{x:.1f}<extra></extra>',
+                        name=f'{uni_choice}'
+                    ))
+                    
+                    # Add average line
+                    fig.add_vline(x=avg_reading_ease, line_dash="dash", line_color="orange", 
+                        annotation_text="Average", annotation_position="top")
+                    
+                    # Update layout
+                    fig.update_layout(
+                        # xaxis_title="Flesch Reading Ease Score",
+                        yaxis=dict(visible=False),
+                        height=300,
+                        showlegend=True,
+                        hovermode='closest'
+                    )
 
 
+        # topic modeling with CorEx, pie chart of topic distribution
         anchors = topics_from_thematic_analysis
         n_topics = len(anchors)+1  # n_topics=14
         policies = df['policy_text']
@@ -606,222 +810,8 @@ elif mode == "Analyse":
             st.pyplot(plt)
         plt.close()
 
- 
-        #add plot for wordcoutn for all policies with a vertical line for selected university and average
-        # with st.expander("Policy Length Comparison", expanded=True):
-        #     plt.figure(figsize=(8,5))
-        #     all_word_counts = df['policy_text'].apply(lambda t: len(re.findall(r"\w+", str(t)))).values
-        #     avg_word_count = all_word_counts.mean()
-        #     sel_word_count = len(re.findall(r"\w+", str(sel_row.get('policy_text',''))))
-        #     plt.hist(all_word_counts, bins=20, color='lightblue', edgecolor='black', alpha=0.7)
-        #     plt.axvline(avg_word_count, color='orange', linestyle='dashed', linewidth=2, label='Average')
-        #     plt.axvline(sel_word_count, color='red', linestyle='dashed', linewidth=2, label=f'{uni_choice}')
-        #     plt.title("Policy Word Count Distribution")
-        #     plt.xlabel("Word Count")
-        #     plt.ylabel("Number of Policies")
-        #     plt.legend()
-        #     st.pyplot(plt)
-        #     plt.close()
 
-        with st.expander("General Statistics", expanded=True):
-            colA, colB = st.columns([1,5])
-            with colA:
-                st.write("Word count")
-            with colB:
-                # Calculate word counts
-                all_word_counts = df['policy_text'].apply(lambda t: len(re.findall(r"\w+", str(t)))).values
-                avg_word_count = all_word_counts.mean()
-                sel_word_count = len(re.findall(r"\w+", str(sel_row.get('policy_text',''))))
-                
-                # Get university names for hover labels
-                university_names = df['university'].tolist()
 
-                # Create interactive plot with Plotly instead of Matplotlib
-
-                
-                # Create DataFrame for plotting
-                plot_df = pd.DataFrame({
-                'word_count': all_word_counts,
-                'university': university_names,
-                'y': [0] * len(all_word_counts)
-                })
-                
-                # Create scatter plot
-                fig = go.Figure()
-                
-
-                # Set light gray background
-                fig.update_layout(plot_bgcolor='#EDF1FD', paper_bgcolor='#EDF1FD')
-
-                # Add all universities as dots
-                fig.add_trace(go.Scatter(
-                x=plot_df['word_count'],
-                y=plot_df['y'],
-                mode='markers',
-                marker=dict(color='steelblue', size=8, opacity=0.7),
-                text=plot_df['university'],
-                hovertemplate='<b>%{text}</b><br>Word Count: %{x}<extra></extra>',
-                name='Universities'
-                ))
-                
-                # Highlight selected university
-                fig.add_trace(go.Scatter(
-                x=[sel_word_count],
-                y=[0],
-                mode='markers',
-                marker=dict(color='red', size=12),
-                text=[uni_choice],
-                hovertemplate='<b>%{text}</b><br>Word Count: %{x}<extra></extra>',
-                name=f'Selected: {uni_choice}'
-                ))
-                
-                # Add average line
-                fig.add_vline(x=avg_word_count, line_dash="dash", line_color="orange", 
-                    annotation_text="Average", annotation_position="top")
-                
-                # Update layout
-                fig.update_layout(
-                # title="Policy Word Count Distribution",
-                xaxis_title="Word Count",
-                yaxis=dict(visible=False),
-                height=300,
-                showlegend=True,
-                hovermode='closest'
-                )
-                
-                # Display in Streamlit
-                st.plotly_chart(fig, use_container_width=True)
-            
-            colC, colD = st.columns([1,5])
-            with colC:
-                st.write("Reading Ease")
-            with colD:
-                # Calculate reading ease scores
-                if HAS_TEXTSTAT:
-                    all_reading_ease = df['policy_text'].apply(lambda t: textstat.flesch_reading_ease(str(t))).values
-                    avg_reading_ease = all_reading_ease.mean()
-                    sel_reading_ease = textstat.flesch_reading_ease(str(sel_row.get('policy_text','')))
-                else:
-                    # Fallback values if textstat not available
-                    all_reading_ease = np.random.normal(50, 20, len(df))  # Mock data
-                    avg_reading_ease = all_reading_ease.mean()
-                    sel_reading_ease = 50  # Default value
-                
-                # Get university names for hover labels
-                university_names = df['university'].tolist()
-                
-                # Create DataFrame for plotting
-                plot_df = pd.DataFrame({
-                    'reading_ease': all_reading_ease,
-                    'university': university_names,
-                    'y': [0] * len(all_reading_ease)
-                })
-                
-                # Create scatter plot
-                fig = go.Figure()
-                
-                # Set light gray background
-                fig.update_layout(plot_bgcolor='#F2FDED', paper_bgcolor='#F2FDED')
-                
-                # Add all universities as dots
-                fig.add_trace(go.Scatter(
-                    x=plot_df['reading_ease'],
-                    y=plot_df['y'],
-                    mode='markers',
-                    marker=dict(color='steelblue', size=8, opacity=0.7),
-                    text=plot_df['university'],
-                    hovertemplate='<b>%{text}</b><br>Reading Ease: %{x:.1f}<extra></extra>',
-                    name='Universities'
-                ))
-                
-                # Highlight selected university
-                fig.add_trace(go.Scatter(
-                    x=[sel_reading_ease],
-                    y=[0],
-                    mode='markers',
-                    marker=dict(color='red', size=12),
-                    text=[uni_choice],
-                    hovertemplate='<b>%{text}</b><br>Reading Ease: %{x:.1f}<extra></extra>',
-                    name=f'Selected: {uni_choice}'
-                ))
-                
-                # Add average line
-                fig.add_vline(x=avg_reading_ease, line_dash="dash", line_color="orange", 
-                    annotation_text="Average", annotation_position="top")
-                
-                # Update layout
-                fig.update_layout(
-                    xaxis_title="Flesch Reading Ease Score",
-                    yaxis=dict(visible=False),
-                    height=300,
-                    showlegend=True,
-                    hovermode='closest'
-                )
-                
-                # Display in Streamlit
-                st.plotly_chart(fig, use_container_width=True)
-                colE, colF = st.columns([1,5])
-                with colE:
-                    st.write("Avg Words/Sentence")
-                with colF:
-                    # Calculate average words per sentence
-                    all_avg_words = df['policy_text'].apply(lambda t: basic_stats(str(t))['avg_words_per_sentence']).values
-                    avg_avg_words = all_avg_words.mean()
-                    sel_avg_words = basic_stats(str(sel_row.get('policy_text','')))['avg_words_per_sentence']
-                    
-                    # Get university names for hover labels
-                    university_names = df['university'].tolist()
-                    
-                    # Create DataFrame for plotting
-                    plot_df = pd.DataFrame({
-                        'avg_words_per_sentence': all_avg_words,
-                        'university': university_names,
-                        'y': [0] * len(all_avg_words)
-                    })
-                    
-                    # Create scatter plot
-                    fig = go.Figure()
-                    
-                    # Set light yellow background
-                    fig.update_layout(plot_bgcolor='#F8EDFD', paper_bgcolor='#F8EDFD')
-                    
-                    # Add all universities as dots
-                    fig.add_trace(go.Scatter(
-                        x=plot_df['avg_words_per_sentence'],
-                        y=plot_df['y'],
-                        mode='markers',
-                        marker=dict(color='steelblue', size=8, opacity=0.7),
-                        text=plot_df['university'],
-                        hovertemplate='<b>%{text}</b><br>Avg Words/Sentence: %{x:.1f}<extra></extra>',
-                        name='Universities'
-                    ))
-                    
-                    # Highlight selected university
-                    fig.add_trace(go.Scatter(
-                        x=[sel_avg_words],
-                        y=[0],
-                        mode='markers',
-                        marker=dict(color='red', size=12),
-                        text=[uni_choice],
-                        hovertemplate='<b>%{text}</b><br>Avg Words/Sentence: %{x:.1f}<extra></extra>',
-                        name=f'Selected: {uni_choice}'
-                    ))
-                    
-                    # Add average line
-                    fig.add_vline(x=avg_avg_words, line_dash="dash", line_color="orange", 
-                        annotation_text="Average", annotation_position="top")
-                    
-                    # Update layout
-                    fig.update_layout(
-                        xaxis_title="Average Words per Sentence",
-                        yaxis=dict(visible=False),
-                        height=300,
-                        showlegend=True,
-                        hovermode='closest'
-                    )
-                    
-                    # Display in Streamlit
-                    st.plotly_chart(fig, use_container_width=True)
 #-------------------------------------------------------------------------------------------------
 # UPLOAD------------------------------------------------------------------------------------------
 elif mode == "Upload":
