@@ -450,12 +450,10 @@ if mode == "Explore":
             
             st.download_button("Download metrics (CSV)", data=metrics_df.to_csv(index=False).encode('utf-8'), file_name="corpus_metrics.csv", mime="text/csv")
 
-    st.subheader("Combined word cloud:")
+    # st.subheader("Combined word cloud:")
         # Generate and display word cloud
     # generate_word_cloud(display_df['policy_text'])
 
-
-    
         # Generate and display word cloud
     with st.expander(f"Word Cloud for all Policies", expanded=True):
         wordcloud = generate_word_cloud(display_df['policy_text'],"Combined Policies")
@@ -523,7 +521,8 @@ elif mode == "Analyse":
             st.write("Policy URL:", sel_row.get('url'))
 
         # st.markdown("**Raw policy text**")
-        st.text_area("Raw policy text", value=sel_row.get('policy_text',''), height=300) 
+        with st.expander("Raw policy text", expanded=True):
+            st.text_area("Raw policy text", value=sel_row.get('policy_text',''), height=300, label_visibility="collapsed") 
         idx= sel_row.name   
         col1, col2 = st.columns([2,1])
             
@@ -538,26 +537,9 @@ elif mode == "Analyse":
             rd = readability_metrics(str(sel_row.get('policy_text','')))
             st.write(pd.DataFrame([ {**bs, **rd} ]).T.rename(columns={0:"value"}))
 
-        # with st.expander(f"Word Cloud for {uni_choice}", expanded=True):
-        #     # Word cloud for selected university
-        #     # st.subheader(f"Word Cloud for {uni_choice}")
-        #     wordcloud = generate_word_cloud(sel_df['policy_text'], name=uni_choice)
-        #     # get row number for university
-        #     idx= sel_row.name
 
-
-        # policies = df['policy_text']
-        # # Split policies into equal-length chunks (e.g., 50 words)
-        # opt_chunk_size=60
-        # chunk_size=opt_chunk_size
-        # print(f"Using chunk size = {chunk_size} words")
-        # # chunk_size=100 --- IGNORE ---
-
-        # st.subheader("CorEx Topic Modeling:")
-        # st.spinner("Analysing topics...")
         anchors = topics_from_thematic_analysis
-        n_topics = len(anchors)+1
-        # n_topics=14
+        n_topics = len(anchors)+1  # n_topics=14
         policies = df['policy_text']
         # corex_model, doc_term_matrix, corex_policy_topic_means= run_corex(policies, anchors=anchors)
         if os.path.exists("corex_results.pkl"):
@@ -569,66 +551,19 @@ elif mode == "Analyse":
             print("Generated new corex results")
 
 
-
-        # Print top words for each topic
-        # for i, topic in enumerate(corex_model.get_topics(n_words=10)):
-        #     st.text(f"Topic {i+1}: {[w for w, _, _ in topic]}")
-
         #     # Add topic distribution to df1
         for i in range(n_topics):
             df[f'CorEx_topic_{i}'] = corex_policy_topic_means[f'CorEx_topic_{i}'].values
-        
-        # st.text(df[[f'CorEx_topic_{i}' for i in range(n_topics)]].head())
-
-
-
-        # def chunk_policy(text, chunk_size):
-        #     words = text.split()
-        #     return [' '.join(words[i:i+chunk_size]) for i in range(0, len(words), chunk_size)]
-
-        # chunks = []
-
-        # for policy in policies:
-        #     chunks.extend(chunk_policy(policy, chunk_size))
-
-        # # Prepare document-term matrix for chunks
-        # vectorizer = CountVectorizer(stop_words='english')
-        # doc_term_matrix = vectorizer.fit_transform(chunks)
-        # words = vectorizer.get_feature_names_out()
-
-        # anchors = topics_from_thematic_analysis
-        # n_topics = len(anchors)+1
-        # # n_topics=14
-        # corex_model = ct.Corex(n_hidden=n_topics, words=words, seed=42)
-
-
-
-        # corex_model.fit(doc_term_matrix, words=words, anchors=anchors, anchor_strength=5)
-
+    
 
         # n_topics=len(anchors)+1
         corex_topics = [f'CorEx_topic_{i}' for i in range(n_topics)]
         # CorEx topic values for this policy (uses existing CorEx_topic_* columns)
         corex_topic_cols = corex_topics  # provided in notebook as a list of column names
         corex_vals = df.loc[idx, corex_topic_cols].astype(float).values
-        # print("CorEx topic values (from df):")
-        # for i, v in enumerate(corex_vals):
-        #     print(f"  {corex_topic_cols[i]}: {v:.4f}")
-        # print()
+  
 
-                # Print top words for each CorEx topic from the fitted corex_model (if available)
-        # if 'corex_model' in globals():
-        #     print("Top words per CorEx topic:")
-        #     for i, topic in enumerate(corex_model.get_topics(n_words=8)):
-        #         top_words = [w for w, _, _ in topic]
-        #         print(f"  Topic {i}: {', '.join(top_words)}")
-        #     print()
-
-
-
-        
-
-                # Pie chart of CorEx topic distribution for this policy (include first word of each topic)
+        # Pie chart of CorEx topic distribution for this policy (include first 3 words of each topic)
         plt.figure(figsize=(6,6))
         if corex_vals.sum() == 0:
             # no topics matched -- show a single grey slice
@@ -673,8 +608,6 @@ elif mode == "Analyse":
  
 
 
-
-
 #-------------------------------------------------------------------------------------------------
 # UPLOAD------------------------------------------------------------------------------------------
 elif mode == "Upload":
@@ -686,8 +619,8 @@ elif mode == "Upload":
     # The uploader is available in the sidebar by default; show upload preview and comparisons here
     if uploaded:
         st.success(f"Uploaded: {uploaded_name}")
-        st.markdown("**Preview**")
-        st.text_area("Uploaded policy preview", value=uploaded_text[:5000], height=250)
+        st.markdown("**Uploaded Policy Text**")
+        st.text_area("Uploaded policy text", value=uploaded_text, height=250, label_visibility="collapsed")
         up_bs = basic_stats(uploaded_text)
         up_rd = readability_metrics(uploaded_text)
         st.subheader("Uploaded policy metrics")
@@ -698,7 +631,7 @@ elif mode == "Upload":
         if len(corpus_texts) == 0:
             st.warning("No corpus policies available to compare against.")
         else:
-            st.markdown("**Similarity (TF-IDF cosine)**")
+            st.markdown("**Similarity with other university policies (TF-IDF cosine)**")
             vectorizer, X = build_tfidf_matrix(corpus_texts + [uploaded_text])
             qvec = X[-1]
             corpus_X = X[:-1]
