@@ -531,13 +531,16 @@ elif mode == "Analyse":
         sel_row = sel_df.iloc[0]
         st.subheader(f"{uni_choice}")
         if sel_row.get('url'):
-            st.write("Gen AI policy URL:", sel_row.get('url'))
-            
+            st.write("Policy URL:", sel_row.get('url'))
+
+        st.markdown("**Raw policy text**")
+        st.text_area(" ", value=sel_row.get('policy_text',''), height=300)    
         col1, col2 = st.columns(2)
             
         with col1:
-            st.markdown("**Raw policy text**")
-            st.text_area(" ", value=sel_row.get('policy_text',''), height=300)
+            wordcloud = generate_word_cloud(sel_df['policy_text'], name=uni_choice)
+            # get row number for university
+            # idx= sel_row.name
             
         with col2:
             st.markdown("**Stats**")
@@ -545,12 +548,12 @@ elif mode == "Analyse":
             rd = readability_metrics(str(sel_row.get('policy_text','')))
             st.write(pd.DataFrame([ {**bs, **rd} ]).T.rename(columns={0:"value"}))
 
-        with st.expander(f"Word Cloud for {uni_choice}"):
-            # Word cloud for selected university
-            # st.subheader(f"Word Cloud for {uni_choice}")
-            wordcloud = generate_word_cloud(sel_df['policy_text'], name=uni_choice)
-            # get row number for university
-            idx= sel_row.name
+        # with st.expander(f"Word Cloud for {uni_choice}", expanded=True):
+        #     # Word cloud for selected university
+        #     # st.subheader(f"Word Cloud for {uni_choice}")
+        #     wordcloud = generate_word_cloud(sel_df['policy_text'], name=uni_choice)
+        #     # get row number for university
+        #     idx= sel_row.name
 
 
         # policies = df['policy_text']
@@ -673,7 +676,7 @@ elif mode == "Analyse":
             labels = [f"Topic {i}: {label_words[i]}" if label_words[i] else f"Topic {i}" for i in range(len(corex_vals))]
             plt.legend(wedges, labels, title="Topics", loc="center left", bbox_to_anchor=(1, 0, 0.5, 1))
         plt.title(f"CorEx topic distribution for policy {idx}")
-        with st.expander(f"Topics found in {uni_choice}'s policy"):
+        with st.expander(f"Topics found in {uni_choice}'s policy", expanded=True):
             st.pyplot(plt)
         plt.close()
 
