@@ -2,7 +2,9 @@
 Streamlit app for exploring Gen-AI policies and comparing user-uploaded policy.
 """
 
-from copyreg import pickle
+# from copyreg 
+import pickle
+# import pypickle
 from datetime import date
 import streamlit as st
 import pandas as pd
