@@ -432,14 +432,14 @@ if mode == "Explore":
     else:
         # st.subheader(f"Policies loaded: {len(display_df)}")
         st.badge(f"Policies loaded: {len(display_df)}", icon=":material/check:", color="green")
-        st.dataframe(display_df[['university', 'words', 'chars']].head(200))
+        st.dataframe(display_df[['university', 'words', 'chars', 'flesch_kincaid']].head(200))
             #basic stats
-        with st.expander("Statistics & evaluation overview", expanded=True):
-        # st.markdown("**Basic statistics across universities**")
-            # Top longest policies
-            top_long = metrics_df.sort_values("words", ascending=False).head(10)
-            st.write("Top 10 longest (by words):")
-            st.table(top_long[['university','words','chars','flesch_kincaid']].reset_index(drop=True))
+        # with st.expander("Statistics & evaluation overview", expanded=True):
+        # # st.markdown("**Basic statistics across universities**")
+        #     # Top longest policies
+        #     top_long = metrics_df.sort_values("words", ascending=False).head(10)
+        #     st.write("Top 10 longest (by words):")
+        #     st.table(top_long[['university','words','chars','flesch_kincaid']].reset_index(drop=True))
 
             # Keyword aggregation
         kw_cols = [c for c in metrics_df.columns if c.startswith('kw_')]
@@ -614,10 +614,10 @@ elif mode == "Analyse":
                 <div style='display: flex; flex-direction: column; justify-content: center; 
                             align-items: center; height: 100%; width: 100%; 
                             text-align: center; padding: 1rem; box-sizing: border-box;'>
-                    <p style='font-size: clamp(16px, 2vw, 30px); 
+                    <p style='font-size: clamp(16px, 1.5vw, 28px);
                             font-weight: 600; 
                             margin-bottom: 0;'>{metric_label}:</p>
-                    <p style='font-size: clamp(36px, 8vw, 100px); 
+                    <p style='font-size: clamp(40px, 5vw, 80px);
                             font-weight: 700; 
                             margin-top: 0;
                             line-height: 1;'> {sel_word_count:,} </p>
@@ -627,8 +627,8 @@ elif mode == "Analyse":
                 )
                 
             colE, colF = st.columns([1,5])
-            with colE:
-                st.write("Avg Words/Sentence")
+            # with colE:
+            #     st.write("Avg Words/Sentence")
             with colF:
                 # Calculate average words per sentence
                 all_avg_words = df['policy_text'].apply(lambda t: basic_stats(str(t))['avg_words_per_sentence']).values
@@ -688,11 +688,29 @@ elif mode == "Analyse":
                 
                 # Display in Streamlit
                 st.plotly_chart(fig, use_container_width=True)
-
+            with colE:
+                metric_label = "Words/Sentence"
+                # st.write("Word count")
+                st.markdown(
+                f"""
+                <div style='display: flex; flex-direction: column; justify-content: center; 
+                            align-items: center; height: 100%; width: 100%; 
+                            text-align: center; padding: 1rem; box-sizing: border-box;'>
+                    <p style='font-size: clamp(16px, 1.5vw, 28px);
+                            font-weight: 600; 
+                            margin-bottom: 0;'>{metric_label}:</p>
+                    <p style='font-size: clamp(40px, 5vw, 80px);
+                            font-weight: 700; 
+                            margin-top: 0;
+                            line-height: 1;'> {sel_avg_words:,} </p>
+                </div>
+                """,
+                unsafe_allow_html=True
+                )
                 
             colC, colD = st.columns([1,5])
-            with colC:
-                st.write("Reading Ease")
+            # with colC:
+            #     st.write("Reading Ease")
             with colD:
                 # Calculate reading ease scores
                 all_reading_ease = df['policy_text'].apply(lambda t: textstat.flesch_reading_ease(str(t))).values
@@ -751,7 +769,25 @@ elif mode == "Analyse":
                 )
                 # Display in Streamlit
                 st.plotly_chart(fig, use_container_width=True)
-
+            with colC:
+                metric_label = "Reading Ease"
+                # st.write("Word count")
+                st.markdown(
+                f"""
+                <div style='display: flex; flex-direction: column; justify-content: center; 
+                            align-items: center; height: 100%; width: 100%; 
+                            text-align: center; padding: 1rem; box-sizing: border-box;'>
+                    <p style='font-size: clamp(16px, 1.5vw, 28px);
+                            font-weight: 600; 
+                            margin-bottom: 0;'>{metric_label}:</p>
+                    <p style='font-size: clamp(40px, 5vw, 80px);
+                            font-weight: 700; 
+                            margin-top: 0;
+                            line-height: 1;'> {sel_reading_ease:,} </p>
+                </div>
+                """,
+                unsafe_allow_html=True
+                )
 
 
         # topic modeling with CorEx, pie chart of topic distribution
