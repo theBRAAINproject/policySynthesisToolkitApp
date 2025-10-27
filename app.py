@@ -299,6 +299,37 @@ topics_from_thematic_analysis = [
         ["misconduct"],
         ["detection", "plagiarism"]
     ]
+
+def chunk_policy(text, chunk_size):
+    words = text.split()
+    return [' '.join(words[i:i+chunk_size]) for i in range(0, len(words), chunk_size)]
+
+
+def run_corex(policies, anchors):
+    # policies = df['policy_text']
+    # Split policies into equal-length chunks (e.g., 50 words)
+    opt_chunk_size=60
+    chunk_size=opt_chunk_size
+    # st.text(f"Using chunk size = {chunk_size} words")
+    # chunk_size=100 --- IGNORE ---
+
+    chunks = []
+    for policy in policies:
+        chunks.extend(chunk_policy(policy, chunk_size))
+
+    # Prepare document-term matrix for chunks
+    vectorizer = CountVectorizer(stop_words='english')
+    doc_term_matrix = vectorizer.fit_transform(chunks)
+    words = vectorizer.get_feature_names_out()
+
+
+    corex_model = ct.Corex(n_hidden=n_topics, words=words, seed=42)
+    corex_model.fit(doc_term_matrix, words=words, anchors=anchors, anchor_strength=5)
+    # corex_model.fit(doc_term_matrix, words=words)
+    return corex_model, doc_term_matrix, 
+
+
+
 #------------------------------------------------------------------------------------------------
 # MAIN-------------------------------------------------------------------------------------------
 # Streamlit App Configuration
@@ -392,45 +423,19 @@ if mode == "Explore":
             
             st.download_button("Download metrics (CSV)", data=metrics_df.to_csv(index=False).encode('utf-8'), file_name="corpus_metrics.csv", mime="text/csv")
 
-    st.subheader("Combined word cloud")
+    st.subheader("Combined word cloud:")
         # Generate and display word cloud
     # generate_word_cloud(display_df['policy_text'])
         # Generate and display word cloud
     wordcloud = generate_word_cloud(display_df['policy_text'],"Combined Policies")
     # st.image(wordcloud, caption="Combined Word Cloud for all Policies")
 
-
-    policies = df['policy_text']
-    # Split policies into equal-length chunks (e.g., 50 words)
-    opt_chunk_size=60
-    chunk_size=opt_chunk_size
-    print(f"Using chunk size = {chunk_size} words")
-    # chunk_size=100 --- IGNORE ---
-
-
-    def chunk_policy(text, chunk_size):
-        words = text.split()
-        return [' '.join(words[i:i+chunk_size]) for i in range(0, len(words), chunk_size)]
-
-    chunks = []
-    for policy in policies:
-        chunks.extend(chunk_policy(policy, chunk_size))
-
-    # Prepare document-term matrix for chunks
-    vectorizer = CountVectorizer(stop_words='english')
-    doc_term_matrix = vectorizer.fit_transform(chunks)
-    words = vectorizer.get_feature_names_out()
-
-
+    st.subheader("CorEx Topic Modeling:")
     anchors = topics_from_thematic_analysis
     n_topics = len(anchors)+1
     # n_topics=14
-    corex_model = ct.Corex(n_hidden=n_topics, words=words, seed=42)
-
-
-
-    corex_model.fit(doc_term_matrix, words=words, anchors=anchors, anchor_strength=5)
-    # corex_model.fit(doc_term_matrix, words=words)
+    policies = df['policy_text']
+    corex_model, doc_term_matrix= run_corex(policies, anchors=anchors)
 
     # Print top words for each topic
     for i, topic in enumerate(corex_model.get_topics(n_words=10)):
