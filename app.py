@@ -350,6 +350,9 @@ def run_corex(policies, anchors):
     #save corex results to pickle
     with open("corex_results.pkl", "wb") as f:
         pickle.dump((corex_model, doc_term_matrix, corex_policy_topic_means), f)
+    #option to download pickle file
+    with st.sidebar.expander("Advanced Options", expanded=True):
+        st.download_button("Download Corex Results", "corex_results.pkl")
     return corex_model, doc_term_matrix, corex_policy_topic_means
 
 
@@ -450,57 +453,39 @@ if mode == "Explore":
     st.subheader("Combined word cloud:")
         # Generate and display word cloud
     # generate_word_cloud(display_df['policy_text'])
-        # Generate and display word cloud
-    wordcloud = generate_word_cloud(display_df['policy_text'],"Combined Policies")
-    # st.image(wordcloud, caption="Combined Word Cloud for all Policies")
 
-    st.subheader("CorEx Topic Modeling:")
-    anchors = topics_from_thematic_analysis
-    n_topics = len(anchors)+1
-    # n_topics=14
-    policies = df['policy_text']
-    if os.path.exists("corex_results.pkl"):
-        with open("corex_results.pkl", "rb") as f:
-            corex_model, doc_term_matrix, corex_policy_topic_means = pickle.load(f)
-            print(f"Loaded corex results from pickle")
-    else:   
-        corex_model, doc_term_matrix, corex_policy_topic_means = run_corex(policies, anchors=anchors)
-        print("Generated new corex results")
-    # Print top words for each topic
-    for i, topic in enumerate(corex_model.get_topics(n_words=10)):
-        st.text(f"Topic {i+1}: {[w for w, _, _ in topic]}")
 
-        # Add topic distribution to df1
-    for i in range(n_topics):
-        df[f'CorEx_topic_{i}'] = corex_policy_topic_means[f'CorEx_topic_{i}'].values
     
-    st.text(df[[f'CorEx_topic_{i}' for i in range(n_topics)]].head())
+        # Generate and display word cloud
+    with st.expander(f"Word Cloud for all Policies", expanded=True):
+        wordcloud = generate_word_cloud(display_df['policy_text'],"Combined Policies")
+
+    with st.expander("Common Topics Found", expanded=True):
+        # st.subheader("CorEx Topic Modeling:")
+        anchors = topics_from_thematic_analysis
+        n_topics = len(anchors)+1
+        # n_topics=14
+        policies = df['policy_text']
+        if os.path.exists("corex_results.pkl"):
+            with open("corex_results.pkl", "rb") as f:
+                corex_model, doc_term_matrix, corex_policy_topic_means = pickle.load(f)
+                print(f"Loaded corex results from pickle")
+        else:   
+            corex_model, doc_term_matrix, corex_policy_topic_means = run_corex(policies, anchors=anchors)
+            print("Generated new corex results")
+        # Print top words for each topic
+        for i, topic in enumerate(corex_model.get_topics(n_words=10)):
+            st.text(f"Topic {i+1}: {[w for w, _, _ in topic]}")
+
+            # Add topic distribution to df1
+        for i in range(n_topics):
+            df[f'CorEx_topic_{i}'] = corex_policy_topic_means[f'CorEx_topic_{i}'].values
+        
+        st.text(df[[f'CorEx_topic_{i}' for i in range(n_topics)]].head())
 
 
 
-    # # Show policies 0 to 19 (indices 0 to 19)
-    # start_idx = 0
-    # num2show = 20
-    # end_idx = start_idx + num2show - 1
 
-    # corex_topics = [f'CorEx_topic_{i}' for i in range(n_topics)]
-    # corex_topic_vals = df1.loc[start_idx:end_idx, corex_topics].values
-
-    # policy_labels = [f'Policy {i}' for i in range(start_idx, end_idx+1)]
-    # bar_width = 0.15
-    # x = np.arange(num2show)
-
-    # plt.figure(figsize=(12, 6))
-    # for topic in range(n_topics):
-    #     plt.bar(x + topic * bar_width, corex_topic_vals[:, topic], width=bar_width, label=f'Topic {topic+1}')
-
-    # plt.xticks(x + bar_width * (n_topics-1)/2, policy_labels, rotation=45)
-    # plt.ylabel('CorEx Topic Value')
-    # plt.xlabel('Policy')
-    # plt.title('Bargraph: Policies 0 to 19 vs CorEx Topics')
-    # plt.legend(title='CorEx Topics')
-    # plt.tight_layout()
-    # plt.show()
 
 
 
@@ -537,16 +522,15 @@ elif mode == "Analyse":
         if sel_row.get('url'):
             st.write("Policy URL:", sel_row.get('url'))
 
-        st.markdown("**Raw policy text**")
-        st.text_area(" ", value=sel_row.get('policy_text',''), height=300) 
+        # st.markdown("**Raw policy text**")
+        st.text_area("Raw policy text", value=sel_row.get('policy_text',''), height=300) 
         idx= sel_row.name   
         col1, col2 = st.columns([2,1])
             
         with col1:
-            st.markdown("**Wordcloud for {uni_choice}**")
+            st.markdown(f"**Wordcloud for {uni_choice}**")
             wordcloud = generate_word_cloud(sel_df['policy_text'], name=uni_choice)
             # get row number for university
-            
             
         with col2:
             st.markdown("**Stats**")
