@@ -536,13 +536,14 @@ elif mode == "Analyse":
             st.write("Policy URL:", sel_row.get('url'))
 
         st.markdown("**Raw policy text**")
-        st.text_area(" ", value=sel_row.get('policy_text',''), height=300)    
+        st.text_area(" ", value=sel_row.get('policy_text',''), height=300) 
+        idx= sel_row.name   
         col1, col2 = st.columns(2,1)
             
         with col1:
             wordcloud = generate_word_cloud(sel_df['policy_text'], name=uni_choice)
             # get row number for university
-            # idx= sel_row.name
+            
             
         with col2:
             st.markdown("**Stats**")
