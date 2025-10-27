@@ -540,7 +540,7 @@ elif mode == "Analyse":
         st.markdown("**Raw policy text**")
         st.text_area(" ", value=sel_row.get('policy_text',''), height=300) 
         idx= sel_row.name   
-        col1, col2 = st.columns(2,1)
+        col1, col2 = st.columns([2,1])
             
         with col1:
             st.markdown("**Wordcloud for {uni_choice}**")
