@@ -597,7 +597,7 @@ elif mode == "Analyse":
             wedges, texts, autotexts = plt.pie(corex_vals, autopct='%1.1f%%', startangle=140, colors=colors)
 
             # Create separate legend/key
-            labels = [f"Topic {i}: {label_words[i]}" if label_words[i] else f"Topic {i}" for i in range(len(corex_vals))]
+            labels = [f"Group{i+1}: {label_words[i]} ({corex_vals[i]/corex_vals.sum()*100:.1f}%)" if label_words[i] else f"Group{i+1} ({corex_vals[i]/corex_vals.sum()*100:.1f}%)" for i in range(len(corex_vals))]
             plt.legend(wedges, labels, title="Topics", loc="center left", bbox_to_anchor=(1, 0, 0.5, 1))
         # plt.title(f"CorEx topic distribution for policy {idx}")
         with st.expander(f"Topics found in {uni_choice}'s policy", expanded=True):
