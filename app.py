@@ -2,6 +2,8 @@
 Streamlit app for exploring Gen-AI policies and comparing user-uploaded policy.
 """
 
+from copyreg import pickle
+from datetime import date
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -340,7 +342,10 @@ def run_corex(policies, anchors):
 
     # Compute mean topic assignment for each policy
     corex_policy_topic_means = corex_chunk_df.groupby('policy_idx').mean()
-
+    date_run= date.today()
+    #save corex results to pickle
+    with open("corex_results.pkl", "wb") as f:
+        pickle.dump((corex_model, doc_term_matrix, corex_policy_topic_means, date_run), f)
     return corex_model, doc_term_matrix, corex_policy_topic_means
 
 
@@ -450,8 +455,13 @@ if mode == "Explore":
     n_topics = len(anchors)+1
     # n_topics=14
     policies = df['policy_text']
-    corex_model, doc_term_matrix, corex_policy_topic_means= run_corex(policies, anchors=anchors)
-
+    if os.path.exists("corex_results.pkl"):
+        with open("corex_results.pkl", "rb") as f:
+            corex_model, doc_term_matrix, corex_policy_topic_means, date_run = pickle.load(f)
+            print(f"Loaded corex results from pickle, from {date_run}")
+    else:   
+        corex_model, doc_term_matrix, corex_policy_topic_means = run_corex(policies, anchors=anchors)
+        print("Generated new corex results")
     # Print top words for each topic
     for i, topic in enumerate(corex_model.get_topics(n_words=10)):
         st.text(f"Topic {i+1}: {[w for w, _, _ in topic]}")
@@ -556,7 +566,16 @@ elif mode == "Analyse":
         n_topics = len(anchors)+1
         # n_topics=14
         policies = df['policy_text']
-        corex_model, doc_term_matrix, corex_policy_topic_means= run_corex(policies, anchors=anchors)
+        # corex_model, doc_term_matrix, corex_policy_topic_means= run_corex(policies, anchors=anchors)
+        if os.path.exists("corex_results.pkl"):
+            with open("corex_results.pkl", "rb") as f:
+                corex_model, doc_term_matrix, corex_policy_topic_means = pickle.load(f)
+                print("Loaded corex results from pickle")
+        else:   
+            corex_model, doc_term_matrix, corex_policy_topic_means = run_corex(policies, anchors=anchors)
+            print("Generated new corex results")
+
+
 
         # Print top words for each topic
         # for i, topic in enumerate(corex_model.get_topics(n_words=10)):
