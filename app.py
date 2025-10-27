@@ -350,7 +350,7 @@ def run_corex(policies, anchors):
     with open("corex_results.pkl", "wb") as f:
         pickle.dump((corex_model, doc_term_matrix, corex_policy_topic_means), f)
     #option to download pickle file
-    with st.sidebar.expander("Advanced Options", expanded=True):
+    with st.sidebar.expander("Advanced Options", expanded=False):
         st.download_button("Download Corex Results", "corex_results.pkl")
     return corex_model, doc_term_matrix, corex_policy_topic_means
 
@@ -443,7 +443,7 @@ if mode == "Explore":
         kw_cols = [c for c in metrics_df.columns if c.startswith('kw_')]
         if kw_cols:
             kw_sum = metrics_df[kw_cols].sum().sort_values(ascending=False)
-            with st.expander("Keyword Mentions Overview", expanded=False):
+            with st.expander("Keywords", expanded=True):
             # st.subheader("Keyword mentions across universities (counts)")
                 st.table(kw_sum.rename_axis('keyword').reset_index().rename(columns={0:'count'}))
             
@@ -621,6 +621,32 @@ elif mode == "Analyse":
             st.pyplot(plt)
             plt.close()
 
+        with st.expander("Policy Length Comparison", expanded=True):
+            # Calculate word counts
+            all_word_counts = df['policy_text'].apply(lambda t: len(re.findall(r"\w+", str(t)))).values
+            avg_word_count = all_word_counts.mean()
+            sel_word_count = len(re.findall(r"\w+", str(sel_row.get('policy_text',''))))
+
+            # Create the dot plot
+            plt.figure(figsize=(8, 2))
+            y_positions = [0] * len(all_word_counts)  # All dots on one line
+            plt.scatter(all_word_counts, y_positions, color='steelblue', alpha=0.7)
+
+            # Add vertical lines for averages
+            plt.axvline(avg_word_count, color='orange', linestyle='dashed', linewidth=2, label='Average')
+            plt.axvline(sel_word_count, color='red', linestyle='dashed', linewidth=2, label=f'{uni_choice}')
+
+            # Labeling and style
+            plt.title("Policy Word Count Distribution (Dot Chart)")
+            plt.xlabel("Word Count")
+            plt.yticks([])  # Hide y-axis since it’s not meaningful
+            plt.legend()
+            plt.tight_layout()
+
+            # Display in Streamlit
+            st.pyplot(plt)
+            plt.close()
+            
 #-------------------------------------------------------------------------------------------------
 # UPLOAD------------------------------------------------------------------------------------------
 elif mode == "Upload":
@@ -694,9 +720,6 @@ elif mode == "Upload":
 
             csv = sim_df.to_csv(index=False).encode('utf-8')
             st.download_button("Download similarity table (CSV)", data=csv, file_name="similarity_results.csv", mime="text/csv")
-
-
-
 
 
     else:
