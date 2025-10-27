@@ -493,7 +493,7 @@ if mode == "Explore":
 # #------------------------------------------------------------------------------------------------
 # # ANALYSE------------------------------------------------------------------------------------------
 elif mode == "Analyse":
-    st.text("select university to analyze")
+    # st.text("select or type university name to analyze")
 
     # # prepare display_df for listing/searching (same logic as before)
     display_df = df.copy()
@@ -511,7 +511,7 @@ elif mode == "Analyse":
 
     uni_options = [""] + display_df['university'].tolist()
     # uni_options = ["All universities"] + display_df['university'].tolist()
-    uni_choice = st.selectbox("Choose university to view", options=uni_options, index=0)    
+    uni_choice = st.selectbox("Select or type university name to analyze", options=uni_options, index=0)    
     sel_df = df[df['university'] == uni_choice]
 
     if sel_df.empty:
@@ -521,25 +521,26 @@ elif mode == "Analyse":
         sel_row = sel_df.iloc[0]
         st.subheader(f"{uni_choice}")
         if sel_row.get('url'):
-            st.write(sel_row.get('url'))
+            st.write("Gen AI policy URL:", sel_row.get('url'))
             
         col1, col2 = st.columns(2)
             
         with col1:
             st.markdown("**Raw policy text**")
-            st.text_area("Raw policy text", value=sel_row.get('policy_text',''), height=300)
+            st.text_area(" ", value=sel_row.get('policy_text',''), height=300)
             
         with col2:
-            st.markdown("**Metrics**")
+            st.markdown("**Stats**")
             bs = basic_stats(str(sel_row.get('policy_text','')))
             rd = readability_metrics(str(sel_row.get('policy_text','')))
             st.write(pd.DataFrame([ {**bs, **rd} ]).T.rename(columns={0:"value"}))
-    
-    # Word cloud for selected university
-        st.subheader(f"Word Cloud for {uni_choice}")
-        wordcloud = generate_word_cloud(sel_df['policy_text'], name=uni_choice)
-    #get row number for university
-        idx= sel_row.name
+
+        with st.expander(f"Word Cloud for {uni_choice}"):
+            # Word cloud for selected university
+            # st.subheader(f"Word Cloud for {uni_choice}")
+            wordcloud = generate_word_cloud(sel_df['policy_text'], name=uni_choice)
+            # get row number for university
+            idx= sel_row.name
 
 
         # policies = df['policy_text']
@@ -549,8 +550,8 @@ elif mode == "Analyse":
         # print(f"Using chunk size = {chunk_size} words")
         # # chunk_size=100 --- IGNORE ---
 
-
-        st.subheader("CorEx Topic Modeling:")
+        # st.subheader("CorEx Topic Modeling:")
+        st.spinner("Analysing topics...")
         anchors = topics_from_thematic_analysis
         n_topics = len(anchors)+1
         # n_topics=14
@@ -558,14 +559,14 @@ elif mode == "Analyse":
         corex_model, doc_term_matrix, corex_policy_topic_means= run_corex(policies, anchors=anchors)
 
         # Print top words for each topic
-        for i, topic in enumerate(corex_model.get_topics(n_words=10)):
-            st.text(f"Topic {i+1}: {[w for w, _, _ in topic]}")
+        # for i, topic in enumerate(corex_model.get_topics(n_words=10)):
+        #     st.text(f"Topic {i+1}: {[w for w, _, _ in topic]}")
 
-            # Add topic distribution to df1
-        for i in range(n_topics):
-            df[f'CorEx_topic_{i}'] = corex_policy_topic_means[f'CorEx_topic_{i}'].values
+        #     # Add topic distribution to df1
+        # for i in range(n_topics):
+        #     df[f'CorEx_topic_{i}'] = corex_policy_topic_means[f'CorEx_topic_{i}'].values
         
-        st.text(df[[f'CorEx_topic_{i}' for i in range(n_topics)]].head())
+        # st.text(df[[f'CorEx_topic_{i}' for i in range(n_topics)]].head())
 
 
 
@@ -598,18 +599,18 @@ elif mode == "Analyse":
         # CorEx topic values for this policy (uses existing CorEx_topic_* columns)
         corex_topic_cols = corex_topics  # provided in notebook as a list of column names
         corex_vals = df.loc[idx, corex_topic_cols].astype(float).values
-        print("CorEx topic values (from df):")
-        for i, v in enumerate(corex_vals):
-            print(f"  {corex_topic_cols[i]}: {v:.4f}")
-        print()
+        # print("CorEx topic values (from df):")
+        # for i, v in enumerate(corex_vals):
+        #     print(f"  {corex_topic_cols[i]}: {v:.4f}")
+        # print()
 
                 # Print top words for each CorEx topic from the fitted corex_model (if available)
-        if 'corex_model' in globals():
-            print("Top words per CorEx topic:")
-            for i, topic in enumerate(corex_model.get_topics(n_words=8)):
-                top_words = [w for w, _, _ in topic]
-                print(f"  Topic {i}: {', '.join(top_words)}")
-            print()
+        # if 'corex_model' in globals():
+        #     print("Top words per CorEx topic:")
+        #     for i, topic in enumerate(corex_model.get_topics(n_words=8)):
+        #         top_words = [w for w, _, _ in topic]
+        #         print(f"  Topic {i}: {', '.join(top_words)}")
+        #     print()
 
 
 
@@ -638,7 +639,7 @@ elif mode == "Analyse":
                 for t in topics_top3[:len(corex_vals)]:
                     if t:
                                 # each t is list of tuples like (word, score, ...)
-                        words = [w for w, *rest in t][:5]
+                        words = [w for w, *rest in t][:3]# take top 3 words
                         label_words.append(', '.join(words))
                     else:
                         label_words.append('')
@@ -648,7 +649,8 @@ elif mode == "Analyse":
             labels = [f"Topic {i}: ({label_words[i]})" if label_words[i] else f"Topic {i}" for i in range(len(corex_vals))]
             plt.pie(corex_vals, labels=labels, autopct='%1.1f%%', startangle=140)
         plt.title(f"CorEx topic distribution for policy {idx}")
-        st.pyplot(plt)
+        with st.expander(f"Topics found in {uni_choice}'s policy"):
+            st.pyplot(plt)
         plt.close()
 
  
