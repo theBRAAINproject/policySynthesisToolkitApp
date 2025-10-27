@@ -263,7 +263,7 @@ def generate_word_cloud(texts: pd.Series, name):
     combined_text = " ".join(texts.astype(str).tolist())
     # extend stopwords with some common artifacts from scraped policies
     stopwords = set(STOPWORDS)
-    stopwords.update(['https', 'http', 'www', 'com', 'org', 'edu', 'page', 'policy', 'policytext', 'generative', 'may', 'take', 'top'])
+    stopwords.update(['https', 'http', 'www','use' , 'will', 'using', 'must', 'com', 'org', 'edu', 'page', 'policy', 'policytext', 'may', 'take', 'top'])
 
     wc = WordCloud(width=1200, height=600, background_color='white',
                    stopwords=stopwords, collocations=False).generate(combined_text)
@@ -309,7 +309,6 @@ topics_from_thematic_analysis = [
 def chunk_policy(text, chunk_size):
     words = text.split()
     return [' '.join(words[i:i+chunk_size]) for i in range(0, len(words), chunk_size)]
-
 
 def run_corex(policies, anchors):
     # policies = df['policy_text']
@@ -401,7 +400,7 @@ mode = st.sidebar.radio("Mode", options=["About", "Explore", "Analyse", "Upload"
 #------------------------------------------------------------------------------------------------
 # EXPLORE------------------------------------------------------------------------------------------
 if mode == "Explore":
-    st.text("Exploring policies")
+    st.header("Exploring UK HEI policies for Generative AI use")
     # prepare display_df for listing/searching (same logic as before)
     display_df = df.copy()
     if 'policy_text' in display_df.columns:
@@ -410,6 +409,7 @@ if mode == "Explore":
 
     #ideas: 
     # show list of universities as containers with name of university and explore button
+    # show logos with university names
     # show logos on UK map
 
     # search box and min words filter visible in main pane
@@ -425,28 +425,27 @@ if mode == "Explore":
     display_df = display_df[display_df.get('words', 0) >= min_words]
     
 
-
-    st.subheader("Statistics & evaluation overview")
     if len(metrics_df) == 0:
         st.info("No corpus metrics available. Add a dataset file to /mnt/data or upload one policy to compare.")
     else:
-        st.subheader(f"Policies loaded: {len(display_df)}")
+        # st.subheader(f"Policies loaded: {len(display_df)}")
+        st.badge(f"Policies loaded: {len(display_df)}", icon=":material/check:", color="green")
         st.dataframe(display_df[['university', 'words', 'chars']].head(200))
             #basic stats
-        st.markdown("**Basic statistics across universities**")
+        with st.expander("Statistics & evaluation overview", expanded=True):
+        # st.markdown("**Basic statistics across universities**")
             # Top longest policies
-        top_long = metrics_df.sort_values("words", ascending=False).head(10)
-        st.write("Top 10 longest (by words):")
-        st.table(top_long[['university','words','chars','flesch_kincaid']].reset_index(drop=True))
+            top_long = metrics_df.sort_values("words", ascending=False).head(10)
+            st.write("Top 10 longest (by words):")
+            st.table(top_long[['university','words','chars','flesch_kincaid']].reset_index(drop=True))
 
             # Keyword aggregation
         kw_cols = [c for c in metrics_df.columns if c.startswith('kw_')]
         if kw_cols:
             kw_sum = metrics_df[kw_cols].sum().sort_values(ascending=False)
-            st.subheader("Keyword mentions across universities (counts)")
-            st.table(kw_sum.rename_axis('keyword').reset_index().rename(columns={0:'count'}))
-
-            # Download metrics
+            with st.expander("Keyword Mentions Overview", expanded=False):
+            # st.subheader("Keyword mentions across universities (counts)")
+                st.table(kw_sum.rename_axis('keyword').reset_index().rename(columns={0:'count'}))
             
             st.download_button("Download metrics (CSV)", data=metrics_df.to_csv(index=False).encode('utf-8'), file_name="corpus_metrics.csv", mime="text/csv")
 
@@ -479,7 +478,7 @@ if mode == "Explore":
         for i in range(n_topics):
             df[f'CorEx_topic_{i}'] = corex_policy_topic_means[f'CorEx_topic_{i}'].values
         
-        st.text(df[[f'CorEx_topic_{i}' for i in range(n_topics)]].head())
+        # st.text(df[[f'CorEx_topic_{i}' for i in range(n_topics)]].head())
 
 
 
@@ -600,7 +599,7 @@ elif mode == "Analyse":
             # Create separate legend/key
             labels = [f"Topic {i}: {label_words[i]}" if label_words[i] else f"Topic {i}" for i in range(len(corex_vals))]
             plt.legend(wedges, labels, title="Topics", loc="center left", bbox_to_anchor=(1, 0, 0.5, 1))
-        plt.title(f"CorEx topic distribution for policy {idx}")
+        # plt.title(f"CorEx topic distribution for policy {idx}")
         with st.expander(f"Topics found in {uni_choice}'s policy", expanded=True):
             st.pyplot(plt)
         plt.close()
