@@ -541,25 +541,6 @@ elif mode == "Analyse":
 
         with st.expander("General Statistics", expanded=True):
             colA, colB = st.columns([1,5])
-            with colA:
-                metric_label = "Word Count"
-                # st.write("Word count")
-                st.markdown(
-                f"""
-                <div style='display: flex; flex-direction: column; justify-content: center; 
-                            align-items: center; height: 100%; width: 100%; 
-                            text-align: center; padding: 1rem; box-sizing: border-box;'>
-                    <p style='font-size: clamp(16px, 2vw, 30px); 
-                            font-weight: 600; 
-                            margin-bottom: 0;'>{metric_label}:</p>
-                    <p style='font-size: clamp(36px, 8vw, 100px); 
-                            font-weight: 700; 
-                            margin-top: 0;
-                            line-height: 1;'> {sel_word_count:,} </p>
-                </div>
-                """,
-                unsafe_allow_html=True
-                )
                 
             with colB:
                 # Calculate word counts
@@ -625,7 +606,25 @@ elif mode == "Analyse":
                 
                 # Display in Streamlit
                 st.plotly_chart(fig, use_container_width=True)
-
+            with colA:
+                metric_label = "Word Count"
+                # st.write("Word count")
+                st.markdown(
+                f"""
+                <div style='display: flex; flex-direction: column; justify-content: center; 
+                            align-items: center; height: 100%; width: 100%; 
+                            text-align: center; padding: 1rem; box-sizing: border-box;'>
+                    <p style='font-size: clamp(16px, 2vw, 30px); 
+                            font-weight: 600; 
+                            margin-bottom: 0;'>{metric_label}:</p>
+                    <p style='font-size: clamp(36px, 8vw, 100px); 
+                            font-weight: 700; 
+                            margin-top: 0;
+                            line-height: 1;'> {sel_word_count:,} </p>
+                </div>
+                """,
+                unsafe_allow_html=True
+                )
                 
             colE, colF = st.columns([1,5])
             with colE:
