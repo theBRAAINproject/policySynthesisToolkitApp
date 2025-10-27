@@ -704,7 +704,7 @@ elif mode == "Analyse":
                     <p style='font-size: clamp(30px, 5vw, 60px);
                             font-weight: 700; 
                             margin-top: 0;
-                            line-height: 1;'> {sel_avg_words_fmt:,} </p>
+                            line-height: 1;'> {sel_avg_words_fmt} </p>
                 </div>
                 """,
                 unsafe_allow_html=True
@@ -785,7 +785,7 @@ elif mode == "Analyse":
                     <p style='font-size: clamp(40px, 5vw, 80px);
                             font-weight: 700; 
                             margin-top: 0;
-                            line-height: 1;'> {sel_reading_ease_fmt:,} </p>
+                            line-height: 1;'> {sel_reading_ease_fmt} </p>
                 </div>
                 """,
                 unsafe_allow_html=True
