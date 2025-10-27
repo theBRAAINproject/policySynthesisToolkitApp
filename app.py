@@ -551,7 +551,7 @@ elif mode == "Analyse":
         # # chunk_size=100 --- IGNORE ---
 
         # st.subheader("CorEx Topic Modeling:")
-        st.spinner("Analysing topics...")
+        # st.spinner("Analysing topics...")
         anchors = topics_from_thematic_analysis
         n_topics = len(anchors)+1
         # n_topics=14
@@ -563,8 +563,8 @@ elif mode == "Analyse":
         #     st.text(f"Topic {i+1}: {[w for w, _, _ in topic]}")
 
         #     # Add topic distribution to df1
-        # for i in range(n_topics):
-        #     df[f'CorEx_topic_{i}'] = corex_policy_topic_means[f'CorEx_topic_{i}'].values
+        for i in range(n_topics):
+            df[f'CorEx_topic_{i}'] = corex_policy_topic_means[f'CorEx_topic_{i}'].values
         
         # st.text(df[[f'CorEx_topic_{i}' for i in range(n_topics)]].head())
 
