@@ -520,7 +520,7 @@ elif mode == "Analyse":
         sel_row = sel_df.iloc[0]
         st.subheader(f"{uni_choice}")
         #if logo of university exists in img/logos/filename.png display it
-        logofilename = sel_row.get('filename','').strip()
+        logofilename = os.path.splitext(sel_row.get('filename','').strip())[0]
         logo_path = f"img/{logofilename}.png"
         if os.path.exists(logo_path):
             st.image(logo_path, width=100)
