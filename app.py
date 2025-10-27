@@ -521,7 +521,7 @@ elif mode == "Analyse":
         st.subheader(f"{uni_choice}")
         #if logo of university exists in img/logos/filename.png display it
         logofilename = sel_row.get('filename','').strip()
-        logo_path = f"img/logos/{logofilename}.png"
+        logo_path = f"img/{logofilename}.png"
         if os.path.exists(logo_path):
             st.image(logo_path, width=100)
 
