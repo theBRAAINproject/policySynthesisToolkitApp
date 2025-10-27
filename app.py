@@ -257,6 +257,8 @@ def compute_corpus_metrics(df: pd.DataFrame) -> pd.DataFrame:
         rows.append(row)
     return pd.DataFrame(rows)
 
+
+
 def generate_word_cloud(texts: pd.Series, name):
     combined_text = " ".join(texts.astype(str).tolist())
     # extend stopwords with some common artifacts from scraped policies
@@ -269,7 +271,7 @@ def generate_word_cloud(texts: pd.Series, name):
     fig, ax = plt.subplots(figsize=(14, 7))
     ax.imshow(wc, interpolation='bilinear')
     ax.axis('off')
-    ax.set_title(f'Word Cloud for {name}', fontsize=16)
+    # ax.set_title(f'Word Cloud for {name}', fontsize=16)
 
     # Display in streamlit
     st.pyplot(fig)
@@ -379,7 +381,7 @@ if len(df) > 0:
 
 # Precompute metrics for corpus
 # st.sidebar.markdown("---")
-compute_button = st.sidebar.button("(Re)compute corpus metrics")
+# compute_button = st.sidebar.button("(Re)compute corpus metrics")
 
 
 if len(df) > 0:
@@ -541,6 +543,7 @@ elif mode == "Analyse":
         col1, col2 = st.columns(2,1)
             
         with col1:
+            st.markdown("**Wordcloud for {uni_choice}**")
             wordcloud = generate_word_cloud(sel_df['policy_text'], name=uni_choice)
             # get row number for university
             
