@@ -690,19 +690,20 @@ elif mode == "Analyse":
                 st.plotly_chart(fig, use_container_width=True)
             with colE:
                 metric_label = "Words/Sentence"
+                sel_avg_words_fmt = f"{sel_avg_words:.2f}"
                 # st.write("Word count")
                 st.markdown(
                 f"""
                 <div style='display: flex; flex-direction: column; justify-content: center; 
                             align-items: center; height: 100%; width: 100%; 
                             text-align: center; padding: 1rem; box-sizing: border-box;'>
-                    <p style='font-size: clamp(16px, 1.5vw, 28px);
+                    <p style='font-size: clamp(16px, 1.5vw, 20px);
                             font-weight: 600; 
                             margin-bottom: 0;'>{metric_label}:</p>
-                    <p style='font-size: clamp(40px, 5vw, 80px);
+                    <p style='font-size: clamp(30px, 5vw, 60px);
                             font-weight: 700; 
                             margin-top: 0;
-                            line-height: 1;'> {sel_avg_words:,} </p>
+                            line-height: 1;'> {sel_avg_words_fmt:,} </p>
                 </div>
                 """,
                 unsafe_allow_html=True
@@ -771,7 +772,7 @@ elif mode == "Analyse":
                 st.plotly_chart(fig, use_container_width=True)
             with colC:
                 metric_label = "Reading Ease"
-                # st.write("Word count")
+                sel_reading_ease_fmt = f"{sel_reading_ease:.2f}"
                 st.markdown(
                 f"""
                 <div style='display: flex; flex-direction: column; justify-content: center; 
@@ -783,7 +784,7 @@ elif mode == "Analyse":
                     <p style='font-size: clamp(40px, 5vw, 80px);
                             font-weight: 700; 
                             margin-top: 0;
-                            line-height: 1;'> {sel_reading_ease:,} </p>
+                            line-height: 1;'> {sel_reading_ease_fmt:,} </p>
                 </div>
                 """,
                 unsafe_allow_html=True
