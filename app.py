@@ -605,7 +605,21 @@ elif mode == "Analyse":
         plt.close()
 
  
-
+        #add plot for wordcoutn for all policies with a vertical line for selected university and average
+        with st.expander("Policy Length Comparison", expanded=True):
+            plt.figure(figsize=(8,5))
+            all_word_counts = df['policy_text'].apply(lambda t: len(re.findall(r"\w+", str(t)))).values
+            avg_word_count = all_word_counts.mean()
+            sel_word_count = len(re.findall(r"\w+", str(sel_row.get('policy_text',''))))
+            plt.hist(all_word_counts, bins=20, color='lightblue', edgecolor='black', alpha=0.7)
+            plt.axvline(avg_word_count, color='orange', linestyle='dashed', linewidth=2, label='Average')
+            plt.axvline(sel_word_count, color='red', linestyle='dashed', linewidth=2, label=f'{uni_choice}')
+            plt.title("Policy Word Count Distribution")
+            plt.xlabel("Word Count")
+            plt.ylabel("Number of Policies")
+            plt.legend()
+            st.pyplot(plt)
+            plt.close()
 
 #-------------------------------------------------------------------------------------------------
 # UPLOAD------------------------------------------------------------------------------------------
