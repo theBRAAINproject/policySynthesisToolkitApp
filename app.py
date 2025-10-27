@@ -432,7 +432,8 @@ if mode == "Explore":
     else:
         # st.subheader(f"Policies loaded: {len(display_df)}")
         st.badge(f"Policies loaded: {len(display_df)}", icon=":material/check:", color="green")
-        st.dataframe(display_df[['university', 'words', 'chars', 'flesch_kincaid']].head(200))
+        st.dataframe(display_df[['university', 'words', 'chars']].head(200))
+        # st.dataframe(display_df[['university', 'words', 'chars', 'flesch_kincaid']].head(200))
             #basic stats
         # with st.expander("Statistics & evaluation overview", expanded=True):
         # # st.markdown("**Basic statistics across universities**")
