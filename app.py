@@ -20,7 +20,7 @@ from corextopic import corextopic as ct
 from sklearn.feature_extraction.text import CountVectorizer
 import numpy as np
 import matplotlib.pyplot as plt
-import plotly.express as px
+# import plotly.express as px
 import plotly.graph_objects as go
 
 
@@ -645,6 +645,10 @@ elif mode == "Analyse":
             # Create scatter plot
             fig = go.Figure()
             
+
+            # Set light gray background
+            fig.update_layout(plot_bgcolor='#f2f2f2', paper_bgcolor='#f2f2f2')
+
             # Add all universities as dots
             fig.add_trace(go.Scatter(
             x=plot_df['word_count'],
@@ -673,10 +677,10 @@ elif mode == "Analyse":
             
             # Update layout
             fig.update_layout(
-            title="Policy Word Count Distribution",
+            # title="Policy Word Count Distribution",
             xaxis_title="Word Count",
             yaxis=dict(visible=False),
-            height=300,
+            height=100,
             showlegend=True,
             hovermode='closest'
             )
