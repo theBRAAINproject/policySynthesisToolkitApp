@@ -646,8 +646,13 @@ elif mode == "Analyse":
             else:
                 label_words = [fw or '' for fw in first_words]
 
-            labels = [f"Topic {i}: ({label_words[i]})" if label_words[i] else f"Topic {i}" for i in range(len(corex_vals))]
-            plt.pie(corex_vals, labels=labels, autopct='%1.1f%%', startangle=140)
+            # Create pie chart without labels
+            colors = plt.cm.Set3(np.linspace(0, 1, len(corex_vals)))
+            wedges, texts, autotexts = plt.pie(corex_vals, autopct='%1.1f%%', startangle=140, colors=colors)
+
+            # Create separate legend/key
+            labels = [f"Topic {i}: {label_words[i]}" if label_words[i] else f"Topic {i}" for i in range(len(corex_vals))]
+            plt.legend(wedges, labels, title="Topics", loc="center left", bbox_to_anchor=(1, 0, 0.5, 1))
         plt.title(f"CorEx topic distribution for policy {idx}")
         with st.expander(f"Topics found in {uni_choice}'s policy"):
             st.pyplot(plt)
