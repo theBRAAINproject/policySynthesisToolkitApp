@@ -347,7 +347,7 @@ def run_corex(policies, anchors):
     date_run= date.today()
     #save corex results to pickle
     with open("corex_results.pkl", "wb") as f:
-        pickle.dump((corex_model, doc_term_matrix, corex_policy_topic_means, date_run), f)
+        pickle.dump((corex_model, doc_term_matrix, corex_policy_topic_means), f)
     return corex_model, doc_term_matrix, corex_policy_topic_means
 
 
@@ -459,8 +459,8 @@ if mode == "Explore":
     policies = df['policy_text']
     if os.path.exists("corex_results.pkl"):
         with open("corex_results.pkl", "rb") as f:
-            corex_model, doc_term_matrix, corex_policy_topic_means, date_run = pickle.load(f)
-            print(f"Loaded corex results from pickle, from {date_run}")
+            corex_model, doc_term_matrix, corex_policy_topic_means = pickle.load(f)
+            print(f"Loaded corex results from pickle")
     else:   
         corex_model, doc_term_matrix, corex_policy_topic_means = run_corex(policies, anchors=anchors)
         print("Generated new corex results")
