@@ -537,7 +537,7 @@ elif mode == "Analyse":
 
         st.markdown("**Raw policy text**")
         st.text_area(" ", value=sel_row.get('policy_text',''), height=300)    
-        col1, col2 = st.columns(2)
+        col1, col2 = st.columns(2,1)
             
         with col1:
             wordcloud = generate_word_cloud(sel_df['policy_text'], name=uni_choice)
