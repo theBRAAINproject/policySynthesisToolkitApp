@@ -449,13 +449,17 @@ if mode == "Explore":
             with st.expander("Keywords", expanded=True):
             # st.subheader("Keyword mentions across universities (counts)")
                 st.table(kw_sum.rename_axis('keyword').reset_index().rename(columns={0:'count'}))
+            #show top keywords as a plotly donut chart
+            fig = px.pie(kw_sum, names='keyword', values='count', title='Top Keywords')
+            st.plotly_chart(fig)
+
             
             st.download_button("Download metrics (CSV)", data=metrics_df.to_csv(index=False).encode('utf-8'), file_name="corpus_metrics.csv", mime="text/csv")
 
     # st.subheader("Combined word cloud:")
         # Generate and display word cloud
     # generate_word_cloud(display_df['policy_text'])
-
+    
         # Generate and display word cloud
     with st.expander(f"Word Cloud for all Policies", expanded=True):
         wordcloud = generate_word_cloud(display_df['policy_text'],"Combined Policies")
@@ -524,7 +528,7 @@ elif mode == "Analyse":
         if os.path.exists(logo_path):
             st.image(logo_path, width=300)
         st.subheader(f"{uni_choice}")
-        
+
         if sel_row.get('url'):
             st.write("Policy URL:", sel_row.get('url'))
 
