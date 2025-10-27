@@ -20,6 +20,8 @@ from corextopic import corextopic as ct
 from sklearn.feature_extraction.text import CountVectorizer
 import numpy as np
 import matplotlib.pyplot as plt
+import plotly.express as px
+import plotly.graph_objects as go
 
 
 # Optional libraries (graceful fallback)
@@ -631,8 +633,7 @@ elif mode == "Analyse":
             university_names = df['university'].tolist()
 
             # Create interactive plot with Plotly instead of Matplotlib
-            import plotly.express as px
-            import plotly.graph_objects as go
+
             
             # Create DataFrame for plotting
             plot_df = pd.DataFrame({
