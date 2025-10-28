@@ -1117,6 +1117,10 @@ elif mode == "Upload":
             top_n = sim_df.head(3)
             for _, r in top_n.iterrows():
                 uni = r['university']
+                #add uni logo, if exists in img/, with filename, e.g., img/uni_name.*** strip extension and add .png
+                logo_path = f"img/{uni.replace(' ','_').lower()}.png"
+                if os.path.exists(logo_path):
+                    st.image(logo_path, width=120)  
                 simscore = r['similarity']
                 full_text = df.loc[df['university']==uni, 'policy_text'].values[0]
                 excerpt = full_text[:800].replace("\n", " ")
