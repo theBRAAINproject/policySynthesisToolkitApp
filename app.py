@@ -1125,9 +1125,11 @@ elif mode == "Upload":
             top_n = sim_df.head(3)
             for _, r in top_n.iterrows():
                 # Get university name from col 'Filename' if exists, else from 'university'
-                uni = r['Filename']
-                #add uni logo, if exists in img/, with filename, e.g., img/uni_name.*** strip extension and add .png
-                logo_path = f"img/{uni.replace(' ','_').lower()}.png"
+                # uni = r['Filename']
+                sel_row = sim_df.iloc[0]
+                # #if logo of university exists in img/logos/filename.png display it
+                logofilename = os.path.splitext(sel_row.get('filename','').strip())[0]
+                logo_path = f"img/{logofilename}.png"
                 if os.path.exists(logo_path):
                     st.image(logo_path, width=120)  
                 simscore = r['similarity']
@@ -1135,6 +1137,17 @@ elif mode == "Upload":
                 excerpt = full_text[:800].replace("\n", " ")
                 st.markdown(f"**{uni}** — TF-IDF similarity {simscore:.3f}")
                 st.write(excerpt + ("..." if len(full_text)>800 else ""))
+
+                # sel_row = sel_df.iloc[0]
+                # #if logo of university exists in img/logos/filename.png display it
+                # logofilename = os.path.splitext(sel_row.get('filename','').strip())[0]
+                # logo_path = f"img/{logofilename}.png"
+                # if os.path.exists(logo_path):
+                #     st.image(logo_path, width=300)
+                # st.subheader(f"{uni_choice}")
+
+
+
 
             # Comparison table with top match
             top_match_uni = sim_df.iloc[0]['university']
