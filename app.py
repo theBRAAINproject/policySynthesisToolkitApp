@@ -999,48 +999,101 @@ elif mode == "Analyse":
   
 
         # Pie chart of CorEx topic distribution for this policy (include first 3 words of each topic)
-        plt.figure(figsize=(6,6))
         if corex_vals.sum() == 0:
             # no topics matched -- show a single grey slice
-            plt.pie([1], labels=['No matching CorEx topics'], colors=['lightgrey'], autopct='%1.1f%%', startangle=140)
+            fig = go.Figure(data=[go.Pie(
+            labels=['No matching CorEx topics'], 
+            values=[1], 
+            marker=dict(colors=['lightgrey'])
+            )])
         else:
             # try to get the first word for each CorEx topic from the fitted model
             first_words = []
             if 'corex_model' in globals():
                 topics = corex_model.get_topics(n_words=1)
-                        # topics is a list where each element is a list/tuple of (word, score, ...)
-                for t in topics[:len(corex_vals)]:
-                    first_words.append(t[0][0] if t and len(t) > 0 else '')
+            # topics is a list where each element is a list/tuple of (word, score, ...)
+            for t in topics[:len(corex_vals)]:
+                first_words.append(t[0][0] if t and len(t) > 0 else '')
             else:
                 first_words = [''] * len(corex_vals)
 
             # build labels with the top 3 words for each CorEx topic (fallback to existing first_words)
             if 'corex_model' in globals():
                 topics_top3 = corex_model.get_topics(n_words=5)
-                label_words = []
-                for t in topics_top3[:len(corex_vals)]:
-                    if t:
-                                # each t is list of tuples like (word, score, ...)
-                        words = [w for w, *rest in t][:3]# take top 3 words
-                        label_words.append(', '.join(words))
-                    else:
-                        label_words.append('')
+            label_words = []
+            for t in topics_top3[:len(corex_vals)]:
+                if t:
+                # each t is list of tuples like (word, score, ...)
+                    words = [w for w, *rest in t][:3]# take top 3 words
+                    label_words.append(', '.join(words))
+                else:
+                    label_words.append('')
             else:
                 label_words = [fw or '' for fw in first_words]
 
-            # Create pie chart without labels
-            colors = plt.cm.Set3(np.linspace(0, 1, len(corex_vals)))
-            wedges, texts, autotexts = plt.pie(corex_vals, autopct='%1.1f%%', startangle=140, colors=colors)
+            # Create labels for pie chart
+            labels = [f"Group{i+1}: {label_words[i]}" if label_words[i] else f"Group{i+1}" for i in range(len(corex_vals))]
+            
+            # Create pie chart with Plotly
+            fig = go.Figure(data=[go.Pie(
+            labels=labels,
+            values=corex_vals,
+            textinfo='label+percent',
+            textposition='inside',
+            hovertemplate='<b>%{label}</b><br>Value: %{value:.3f}<br>Percent: %{percent}<extra></extra>'
+            )])
+            
+        fig.update_layout(
+            title=f"Topics found in {uni_choice}'s policy",
+            showlegend=True,
+            height=600
+        )
 
-            # Create separate legend/key
-            labels = [f"Group{i+1}: {label_words[i]} ({corex_vals[i]/corex_vals.sum()*100:.1f}%)" if label_words[i] else f"Group{i+1} ({corex_vals[i]/corex_vals.sum()*100:.1f}%)" for i in range(len(corex_vals))]
-            plt.legend(wedges, labels, title="Topics", loc="center left", bbox_to_anchor=(1, 0, 0.5, 1))
-        # plt.title(f"CorEx topic distribution for policy {idx}")
         with st.expander(f"Topics found in {uni_choice}'s policy", expanded=True):
-            st.pyplot(plt)
-        plt.close()
+            st.plotly_chart(fig, use_container_width=True)
 
 
+        # # Pie chart of CorEx topic distribution for this policy (include first 3 words of each topic)
+        # plt.figure(figsize=(6,6))
+        # if corex_vals.sum() == 0:
+        #     # no topics matched -- show a single grey slice
+        #     plt.pie([1], labels=['No matching CorEx topics'], colors=['lightgrey'], autopct='%1.1f%%', startangle=140)
+        # else:
+        #     # try to get the first word for each CorEx topic from the fitted model
+        #     first_words = []
+        #     if 'corex_model' in globals():
+        #         topics = corex_model.get_topics(n_words=1)
+        #                 # topics is a list where each element is a list/tuple of (word, score, ...)
+        #         for t in topics[:len(corex_vals)]:
+        #             first_words.append(t[0][0] if t and len(t) > 0 else '')
+        #     else:
+        #         first_words = [''] * len(corex_vals)
+
+        #     # build labels with the top 3 words for each CorEx topic (fallback to existing first_words)
+        #     if 'corex_model' in globals():
+        #         topics_top3 = corex_model.get_topics(n_words=5)
+        #         label_words = []
+        #         for t in topics_top3[:len(corex_vals)]:
+        #             if t:
+        #                         # each t is list of tuples like (word, score, ...)
+        #                 words = [w for w, *rest in t][:3]# take top 3 words
+        #                 label_words.append(', '.join(words))
+        #             else:
+        #                 label_words.append('')
+        #     else:
+        #         label_words = [fw or '' for fw in first_words]
+
+        #     # Create pie chart without labels
+        #     colors = plt.cm.Set3(np.linspace(0, 1, len(corex_vals)))
+        #     wedges, texts, autotexts = plt.pie(corex_vals, autopct='%1.1f%%', startangle=140, colors=colors)
+
+        #     # Create separate legend/key
+        #     labels = [f"Group{i+1}: {label_words[i]} ({corex_vals[i]/corex_vals.sum()*100:.1f}%)" if label_words[i] else f"Group{i+1} ({corex_vals[i]/corex_vals.sum()*100:.1f}%)" for i in range(len(corex_vals))]
+        #     plt.legend(wedges, labels, title="Topics", loc="center left", bbox_to_anchor=(1, 0, 0.5, 1))
+        # # plt.title(f"CorEx topic distribution for policy {idx}")
+        # with st.expander(f"Topics found in {uni_choice}'s policy", expanded=True):
+        #     st.pyplot(plt)
+        # plt.close()
 
 #-------------------------------------------------------------------------------------------------
 # UPLOAD------------------------------------------------------------------------------------------
