@@ -682,16 +682,23 @@ if mode == "Explore":
     
     fig, ax = plt.subplots(figsize=(10,10))
     ax.axis('off')
-    circlify.draw(circles, ax=ax)
+    
+    # Manually draw circles using matplotlib
+    for circle in circles:
+        patch = plt.Circle((circle.x, circle.y), circle.r, alpha=0.6, 
+                          facecolor='lightblue', edgecolor='black', linewidth=2)
+        ax.add_patch(patch)
     
     # Add text labels inside each circle
     for circle, label in zip(circles, topic_labels):
         ax.text(circle.x, circle.y, label, ha='center', va='center', 
                 fontsize=8, wrap=True, bbox=dict(boxstyle="round,pad=0.3", 
                 facecolor='white', alpha=0.7))
-    fig, ax = plt.subplots(figsize=(10,10))
-    ax.axis('off')
-    circlify.draw(circles, ax=ax)
+    
+    # Set equal aspect ratio and limits
+    ax.set_xlim(-1.1, 1.1)
+    ax.set_ylim(-1.1, 1.1)
+    ax.set_aspect('equal')
     st.pyplot(fig)  
 
 
