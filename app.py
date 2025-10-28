@@ -655,7 +655,7 @@ if mode == "Explore":
         # st.text(df[[f'CorEx_topic_{i}' for i in range(n_topics)]].head())
 
     # show topics as a bubble chart, with each bubble represeting the size of topic in the corpora 
-    # topic_sizes = df[[f'CorEx_topic_{i}' for i in range(n_topics)]].sum()
+    topic_sizes = df[[f'CorEx_topic_{i}' for i in range(n_topics)]].sum()
     # fig = px.scatter(x=topic_sizes.index, y=topic_sizes.values, size=topic_sizes.values, title="CorEx Topic Sizes")
     # st.plotly_chart(fig)
 
@@ -666,6 +666,29 @@ if mode == "Explore":
         show_enclosure=False, 
         target_enclosure=circlify.Circle(x=0, y=0, r=1)
     )
+    
+    # Get first 3 words for each topic from the CorEx model
+    if 'corex_model' in globals():
+        topics_top3 = corex_model.get_topics(n_words=3)
+        topic_labels = []
+        for i, t in enumerate(topics_top3[:len(topic_sizes)]):
+            if t:
+                words = [w for w, *rest in t][:3]  # take top 3 words
+                topic_labels.append(f"Group {i+1}:\n{', '.join(words)}")
+            else:
+                topic_labels.append(f"Group {i+1}")
+    else:
+        topic_labels = [f"Group {i+1}" for i in range(len(topic_sizes))]
+    
+    fig, ax = plt.subplots(figsize=(10,10))
+    ax.axis('off')
+    circlify.draw(circles, ax=ax)
+    
+    # Add text labels inside each circle
+    for circle, label in zip(circles, topic_labels):
+        ax.text(circle.x, circle.y, label, ha='center', va='center', 
+                fontsize=8, wrap=True, bbox=dict(boxstyle="round,pad=0.3", 
+                facecolor='white', alpha=0.7))
     fig, ax = plt.subplots(figsize=(10,10))
     ax.axis('off')
     circlify.draw(circles, ax=ax)
