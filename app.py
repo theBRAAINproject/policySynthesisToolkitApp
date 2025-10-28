@@ -645,8 +645,8 @@ if mode == "Explore":
         corex_model, doc_term_matrix, corex_policy_topic_means = run_corex(policies, anchors=anchors)
         print("Generated new corex results")
     # Print top words for each topic
-    for i, topic in enumerate(corex_model.get_topics(n_words=10)):
-        st.text(f"Group {i+1}: {[w for w, _, _ in topic]}")
+    # for i, topic in enumerate(corex_model.get_topics(n_words=10)):
+    #     st.text(f"Group {i+1}: {[w for w, _, _ in topic]}")
 
         # Add topic distribution to df1
     for i in range(n_topics):
@@ -655,7 +655,6 @@ if mode == "Explore":
 
 
     with st.expander("Common Topics Found", expanded=True):
-
         # show topics as a bubble chart, with each bubble represeting the size of topic in the corpora 
         topic_sizes = df[[f'CorEx_topic_{i}' for i in range(n_topics)]].sum()
         # fig = px.scatter(x=topic_sizes.index, y=topic_sizes.values, size=topic_sizes.values, title="CorEx Topic Sizes")
@@ -682,7 +681,7 @@ if mode == "Explore":
         else:
             topic_labels = [f"Group {i+1}" for i in range(len(topic_sizes))]
         
-        fig, ax = plt.subplots(figsize=(10,10))
+        fig, ax = plt.subplots(figsize=(10,4))
         ax.axis('off')
         
         # import matplotlib.colors as mcolors
@@ -703,8 +702,7 @@ if mode == "Explore":
         # Add text labels inside each circle
         for circle, label in zip(circles, topic_labels):
             ax.text(circle.x, circle.y, label, ha='center', va='center', 
-                    fontsize=8, wrap=True, 
-                    bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
+                    fontsize=8, wrap=True))
         
         # Set equal aspect ratio and limits
         ax.set_xlim(-1.1, 1.1)
@@ -713,8 +711,11 @@ if mode == "Explore":
         st.pyplot(fig)  
     
     with st.expander("Full List of Topics Found", expanded=False):
-        st.text(df[[f'CorEx_topic_{i}' for i in range(n_topics)]].head())
-        
+            # Print top words for each topic
+        for i, topic in enumerate(corex_model.get_topics(n_words=10)):
+            st.text(f"Group {i+1}: {[w for w, _, _ in topic]}")
+        # st.text(df[[f'CorEx_topic_{i}' for i in range(n_topics)]].head())
+
     with st.expander("Advance Options", expanded=False):
         # st.download_button("Download similarity table (CSV)", data=csv, file_name="similarity_results.csv", mime="text/csv")
         st.download_button("Download metrics (CSV)", data=metrics_df.to_csv(index=False).encode('utf-8'), file_name="corpus_metrics.csv", mime="text/csv")
