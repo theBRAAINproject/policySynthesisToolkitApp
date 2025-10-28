@@ -1199,18 +1199,18 @@ elif mode == "Upload":
                 full_text = df.loc[df['university']==uni, 'policy_text'].values[0]
                 # excerpt = full_text[:800].replace("\n", " ")
 
-                col1, col2 = st.columns([3,1])
-                with col2:  
-                    if os.path.exists(logo_path):
-                        st.image(logo_path, width=200)  
-                with col1:
-                # st.markdown(f"**{uni}**, Similarity Score: {simscore:.3f}, out of 1.000")
-                    st.markdown(f"**{uni}**")
-                    st.badge(f"Similarity Score: {simscore:.3f}, out of 1.000", icon=":material/analytics:", color="blue")
-                # st.badge(f"Policies loaded: {len(display_df)}", icon=":material/check:", color="blue")
                 with st.container(border=True):
-                    # st.write(excerpt + ("..." if len(full_text)>800 else ""))
-                # with st.expander("Uploaded policy text", expanded=True):
+                    col1, col2 = st.columns([3,1])
+                    with col2:  
+                        if os.path.exists(logo_path):
+                            st.image(logo_path, width=200)  
+                    with col1:
+                    # st.markdown(f"**{uni}**, Similarity Score: {simscore:.3f}, out of 1.000")
+                        st.markdown(f"**{uni}**")
+                        st.badge(f"Similarity Score: {simscore:.3f}, out of 1.000", icon=":material/analytics:", color="blue")
+                    # st.badge(f"Policies loaded: {len(display_df)}", icon=":material/check:", color="blue")
+                        # st.write(excerpt + ("..." if len(full_text)>800 else ""))
+                    # with st.expander("Uploaded policy text", expanded=True):
                     st.text_area(f"Policy text {uni}", value=full_text, height=250, label_visibility="collapsed")
 
 
