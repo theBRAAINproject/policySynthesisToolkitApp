@@ -618,6 +618,35 @@ if mode == "Explore":
                 fig = px.bar(kw_sum_df, x='keyword', y='count', title='All Keywords')
                 st.plotly_chart(fig)
 
+                #load keywords into multiselect for further analysis, if a user removes a keyword, update the bar chart
+                selected_keywords = st.multiselect(
+                    "Select keywords to analyze", 
+                    options=kw_sum.index.str.replace('kw_', '').tolist(), 
+                    default=kw_sum.index.str.replace('kw_', '').tolist()
+                )
+
+                if selected_keywords:
+                    # Filter the keyword data based on selection
+                    selected_kw_cols = [f'kw_{kw}' for kw in selected_keywords]
+                    filtered_kw_sum = metrics_df[selected_kw_cols].sum().sort_values(ascending=False)
+                    
+                    # Update the bar chart with selected keywords
+                    filtered_kw_df = filtered_kw_sum.reset_index()
+                    filtered_kw_df.columns = ['keyword', 'count']
+                    filtered_kw_df['keyword'] = filtered_kw_df['keyword'].str.replace('kw_', '')
+                    
+                    fig_filtered = px.bar(filtered_kw_df, x='keyword', y='count', 
+                                         title=f'Selected Keywords ({len(selected_keywords)} selected)')
+                    st.plotly_chart(fig_filtered)
+                else:
+                    st.info("Select keywords to display in the chart")
+       
+
+
+
+        # with st.expander("Keyword Analysis", expanded=True):
+
+
         # #add selected keywords as input chips and show their counts across corpus as graph
         # selected_keywords = st.multiselect("Select keywords to analyze", options=kw_sum.index.tolist())
         # if selected_keywords:
@@ -634,9 +663,10 @@ if mode == "Explore":
 
 
             # st.subheader("CorEx Topic Modeling:")
+    
+    
     anchors = topics_from_thematic_analysis
-    n_topics = len(anchors)+1
-    # n_topics=14
+    n_topics = len(anchors)+1 # n_topics=14
     policies = df['policy_text']
     if os.path.exists("corex_results.pkl"):
         with open("corex_results.pkl", "rb") as f:
@@ -645,14 +675,9 @@ if mode == "Explore":
     else:   
         corex_model, doc_term_matrix, corex_policy_topic_means = run_corex(policies, anchors=anchors)
         print("Generated new corex results")
-    # Print top words for each topic
-    # for i, topic in enumerate(corex_model.get_topics(n_words=10)):
-    #     st.text(f"Group {i+1}: {[w for w, _, _ in topic]}")
-
-        # Add topic distribution to df1
     for i in range(n_topics):
         df[f'CorEx_topic_{i}'] = corex_policy_topic_means[f'CorEx_topic_{i}'].values
-    #show topics as 
+
 
 
     with st.expander("Common Topics Found", expanded=True):
@@ -720,6 +745,7 @@ if mode == "Explore":
         ax.set_aspect('equal')
 
         st.pyplot(fig)
+    
     with st.expander(":blue-background[Full List of Topics Found]", expanded=False):
             # Print top words for each topic
         for i, topic in enumerate(corex_model.get_topics(n_words=10)):
