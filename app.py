@@ -1135,7 +1135,11 @@ elif mode == "Upload":
                 simscore = r['similarity']
                 full_text = df.loc[df['university']==uni, 'policy_text'].values[0]
                 excerpt = full_text[:800].replace("\n", " ")
-                st.markdown(f"**{uni}**: similarity score{simscore:.3f}")
+                # st.markdown(f"**{uni}**, Similarity Score: {simscore:.3f}, out of 1.000")
+                st.markdown(f"**{uni}**")
+                st.badge(f"Similarity: {simscore:.3f}", icon=":material/analytics:", color="blue")
+                # st.badge(f"Policies loaded: {len(display_df)}", icon=":material/check:", color="blue")
+
                 st.write(excerpt + ("..." if len(full_text)>800 else ""))
 
                 # sel_row = sel_df.iloc[0]
