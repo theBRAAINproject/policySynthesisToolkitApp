@@ -1091,10 +1091,15 @@ elif mode == "Upload":
                 st.dataframe(sim_df.head(20))
        
             #add scatterPlot2col for similarity scores, based on TF-IDF similarity, as in sim_df, sims
+            # Pre-build the TF-IDF matrix with all texts to ensure compatible dimensions
+            all_texts = corpus_texts + [uploaded_text]
+            vectorizer, X_all = build_tfidf_matrix(all_texts)
+            uploaded_vec = X_all[-1]
+            
             scatterPlot2col(df, uploaded_text, "Uploaded Policy", 
                            lambda t: cosine_similarity(
-                               build_tfidf_matrix([uploaded_text])[1],
-                               build_tfidf_matrix([str(t)])[1]
+                               vectorizer.transform([str(t)]),
+                               uploaded_vec.reshape(1, -1)
                            ).flatten()[0] if str(t).strip() else 0.0,
                            "Similarity Score", "#FAF7E6", "{:.3f}")
 
