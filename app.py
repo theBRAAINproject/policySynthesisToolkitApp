@@ -666,7 +666,7 @@ if mode == "Explore":
         show_enclosure=False, 
         target_enclosure=circlify.Circle(x=0, y=0, r=1)
     )
-    
+
     # Get first 3 words for each topic from the CorEx model
     if 'corex_model' in globals():
         topics_top3 = corex_model.get_topics(n_words=3)
