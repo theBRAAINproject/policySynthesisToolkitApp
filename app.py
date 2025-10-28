@@ -1211,13 +1211,13 @@ elif mode == "Upload":
                         if simscore >= 0.85:
                             scorecolor="green"
                             #icon up arrow
-                            scoreicon=":material/trending-up:"
+                            scoreicon=":material/arrow_upward:"
                         elif simscore >= 0.5:
                             scorecolor="orange"
-                            scoreicon=":material/trending-neutral:"
+                            scoreicon=":material/remove:"
                         else:
                             scorecolor="blue"
-                            scoreicon=":material/trending-down:"
+                            scoreicon=":material/arrow_downward:"
                         st.badge(f"Similarity Score: {simscore:.3f}, out of 1.000", icon=scoreicon, color=scorecolor)
                     # st.badge(f"Policies loaded: {len(display_df)}", icon=":material/check:", color="blue")
                         # st.write(excerpt + ("..." if len(full_text)>800 else ""))
