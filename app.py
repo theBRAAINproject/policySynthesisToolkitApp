@@ -612,11 +612,11 @@ if mode == "Explore":
                     fig = px.pie(values=kw_sum.values, names=kw_sum.index, title='Top Keywords')
                     st.plotly_chart(fig)
 
-                #show all keywords as a plotly bar chart
-                kw_sum_df = kw_sum.reset_index()
-                kw_sum_df.columns = ['keyword', 'count']
-                fig = px.bar(kw_sum_df, x='keyword', y='count', title='All Keywords')
-                st.plotly_chart(fig)
+                # #show all keywords as a plotly bar chart
+                # kw_sum_df = kw_sum.reset_index()
+                # kw_sum_df.columns = ['keyword', 'count']
+                # fig = px.bar(kw_sum_df, x='keyword', y='count', title='All Keywords')
+                # st.plotly_chart(fig)
 
                 #load keywords into multiselect for further analysis, if a user removes a keyword, update the bar chart
                 selected_keywords = st.multiselect(
