@@ -1142,7 +1142,7 @@ elif mode == "Upload":
                 full_text = df.loc[df['university']==uni, 'policy_text'].values[0]
                 excerpt = full_text[:800].replace("\n", " ")
 
-                col1, col2 = st.columns([4,1])
+                col1, col2 = st.columns([3,1])
                 with col2:  
                     if os.path.exists(logo_path):
                         st.image(logo_path, width=200)  
@@ -1151,8 +1151,8 @@ elif mode == "Upload":
                     st.markdown(f"**{uni}**")
                     st.badge(f"Similarity: {simscore:.3f}", icon=":material/analytics:", color="blue")
                 # st.badge(f"Policies loaded: {len(display_df)}", icon=":material/check:", color="blue")
-                    with st.container(border=True):
-                        st.write(excerpt + ("..." if len(full_text)>800 else ""))
+                with st.container(border=True):
+                    st.write(excerpt + ("..." if len(full_text)>800 else ""))
 
 
 
