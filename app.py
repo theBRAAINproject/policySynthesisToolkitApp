@@ -1091,7 +1091,7 @@ elif mode == "Upload":
                 st.dataframe(sim_df.head(20))
        
             #add scatterPlot2col for similarity scores, based on TF-IDF similarity, as in sim_df, sims
-            scatterPlot2col(sim_df, {'policy_text': uploaded_text}, "Uploaded Policy", 
+            scatterPlot2col(df, {'policy_text': uploaded_text}, "Uploaded Policy", 
                            lambda t: cosine_similarity(
                                build_tfidf_matrix([uploaded_text])[1],
                                build_tfidf_matrix([str(t)])[1]
