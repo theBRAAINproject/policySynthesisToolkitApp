@@ -720,8 +720,7 @@ if mode == "Explore":
         ax.set_aspect('equal')
 
         st.pyplot(fig)
-
-    with st.expander("Full List of Topics Found", expanded=False):
+    with st.expander(":blue-background[Full List of Topics Found]", expanded=False):
             # Print top words for each topic
         for i, topic in enumerate(corex_model.get_topics(n_words=10)):
             st.text(f"Group {i+1}: {[w for w, _, _ in topic]}")
