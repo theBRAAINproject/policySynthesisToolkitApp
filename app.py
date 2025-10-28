@@ -456,12 +456,15 @@ if mode == "Explore":
 
             st.download_button("Download metrics (CSV)", data=metrics_df.to_csv(index=False).encode('utf-8'), file_name="corpus_metrics.csv", mime="text/csv")
         
+        #show all keywords as a plotly bar chart
+        fig = px.bar(kw_sum, x='keyword', y='count', title='All Keywords')
+        st.plotly_chart(fig)
 
-        #add selected keywords as input chips and show their counts across corpus as graph
-        selected_keywords = st.multiselect("Select keywords to analyze", options=kw_sum.index.tolist())
-        if selected_keywords:
-            filtered_df = display_df[display_df['policy_text'].str.contains('|'.join(selected_keywords), case=False, na=False)]
-            st.bar_chart(filtered_df['policy_text'].str.split().str.len())
+        # #add selected keywords as input chips and show their counts across corpus as graph
+        # selected_keywords = st.multiselect("Select keywords to analyze", options=kw_sum.index.tolist())
+        # if selected_keywords:
+        #     filtered_df = display_df[display_df['policy_text'].str.contains('|'.join(selected_keywords), case=False, na=False)]
+        #     st.bar_chart(filtered_df['policy_text'].str.split().str.len())
                 # st.subheader("Combined word cloud:")
         # Generate and display word cloud
     # generate_word_cloud(display_df['policy_text'])
