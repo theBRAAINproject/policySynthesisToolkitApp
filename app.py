@@ -603,19 +603,20 @@ if mode == "Explore":
         if kw_cols:
             kw_sum = metrics_df[kw_cols].sum().sort_values(ascending=False)
             with st.expander("Keywords", expanded=True):
-            # st.subheader("Keyword mentions across universities (counts)")
-                st.table(kw_sum.rename_axis('keyword').reset_index().rename(columns={0:'count'}))
-            #show top keywords as a plotly donut chart
-            fig = px.pie(values=kw_sum.values, names=kw_sum.index, title='Top Keywords')
-            st.plotly_chart(fig)
+                col1, col2 = st.columns([1,1])
+                with col1:
+                    # st.subheader("Keyword mentions across universities (counts)")
+                    st.table(kw_sum.rename_axis('keyword').reset_index().rename(columns={0:'count'}))
+                with col2:
+                    #show top keywords as a plotly donut chart
+                    fig = px.pie(values=kw_sum.values, names=kw_sum.index, title='Top Keywords')
+                    st.plotly_chart(fig)
 
-
-  
-        #show all keywords as a plotly bar chart
-        kw_sum_df = kw_sum.reset_index()
-        kw_sum_df.columns = ['keyword', 'count']
-        fig = px.bar(kw_sum_df, x='keyword', y='count', title='All Keywords')
-        st.plotly_chart(fig)
+                #show all keywords as a plotly bar chart
+                kw_sum_df = kw_sum.reset_index()
+                kw_sum_df.columns = ['keyword', 'count']
+                fig = px.bar(kw_sum_df, x='keyword', y='count', title='All Keywords')
+                st.plotly_chart(fig)
 
         # #add selected keywords as input chips and show their counts across corpus as graph
         # selected_keywords = st.multiselect("Select keywords to analyze", options=kw_sum.index.tolist())
