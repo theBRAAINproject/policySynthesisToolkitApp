@@ -356,6 +356,108 @@ def run_corex(policies, anchors):
         st.download_button("Download Corex Results", "corex_results.pkl")
     return corex_model, doc_term_matrix, corex_policy_topic_means
 
+def scatterPlot2col(
+    df, 
+    sel_row, 
+    uni_choice, 
+    metric_func, 
+    metric_label, 
+    color="#fefae0",
+    value_format="{:.2f}"):
+    """
+    Generic metric plotter for comparing a numeric text metric across universities.
+    """
+
+    colE, colF = st.columns([1, 5])
+
+    with colF:
+        # Compute metric for all universities
+        all_metrics = df['policy_text'].apply(lambda t: metric_func(str(t))).values
+        avg_metric = all_metrics.mean()
+        sel_metric = metric_func(str(sel_row.get('policy_text', '')))
+
+        # Data for scatter plot
+        plot_df = pd.DataFrame({
+            'metric_value': all_metrics,
+            'university': df['university'],
+            'y': [0] * len(all_metrics)
+        })
+
+        # Create scatter plot
+        fig = go.Figure()
+        fig.update_layout(plot_bgcolor=color, paper_bgcolor=color)
+
+        # Add all universities
+        fig.add_trace(go.Scatter(
+            x=plot_df['metric_value'],
+            y=plot_df['y'],
+            mode='markers',
+            marker=dict(color='steelblue', size=8, opacity=0.7),
+            text=plot_df['university'],
+            hovertemplate=f"<b>%{{text}}</b><br>{metric_label}: %{{x:.2f}}<extra></extra>",
+            name='All Universities'
+        ))
+
+        # Highlight selected university
+        fig.add_trace(go.Scatter(
+            x=[sel_metric],
+            y=[0],
+            mode='markers',
+            marker=dict(color='red', size=12),
+            text=[uni_choice],
+            hovertemplate=f"<b>%{{text}}</b><br>{metric_label}: %{{x:.2f}}<extra></extra>",
+            name=f'{uni_choice}'
+        ))
+
+        # Add average line
+        fig.add_vline(
+            x=avg_metric,
+            line_dash="dash",
+            line_color="orange",
+            annotation_text="Average",
+            annotation_position="top"
+        )
+
+        # Layout styling
+        fig.update_layout(
+            xaxis_title=metric_label,
+            yaxis=dict(visible=False),
+            height=300,
+            showlegend=True,
+            hovermode='closest'
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
+
+    with colE:
+        # Metric display
+        try:
+            sel_fmt = value_format.format(sel_metric)
+        except:
+            sel_fmt = str(sel_metric)
+
+        st.markdown(
+            f"""
+            <div style='display: flex; flex-direction: column; justify-content: center; 
+                        align-items: center; height: 100%; width: 100%; 
+                        text-align: center; padding: 1rem; box-sizing: border-box;'>
+                <p style='font-size: clamp(10px, 1.5vw, 15px);
+                        font-weight: 600; 
+                        margin-bottom: 0;'>{metric_label}:</p>
+                <p style='font-size: clamp(20px, 5vw, 40px);
+                        font-weight: 700; 
+                        margin-top: 0;
+                        line-height: 1;'> {sel_fmt} </p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+# def avg_words_per_sentence(text):
+#     sentences = text.split('.')
+#     words = text.split()
+#     return len(words) / max(1, len(sentences))
+
 
 
 #------------------------------------------------------------------------------------------------
@@ -957,9 +1059,24 @@ elif mode == "Upload":
             csv = sim_df.to_csv(index=False).encode('utf-8')
             st.download_button("Download similarity table (CSV)", data=csv, file_name="similarity_results.csv", mime="text/csv")
 
+            # scatterPlot2col()
+            uni_choice = "Uploaded Policy"
+            sel_row = {
+                'policy_text': uploaded_text
+            }
+            with st.expander("General Statistics", expanded=True):
+                scatterPlot2col(df, sel_row, uni_choice, 
+                           lambda t: len(re.findall(r"\w+", str(t))), 
+                           "Word Count", "#EDF1FD", "{:,.0f}")
+                scatterPlot2col(df, sel_row, uni_choice, 
+                           lambda t: basic_stats(t)['avg_words_per_sentence'], 
+                           "Words/Sentence", "#F8EDFD")
+                scatterPlot2col(df, sel_row, uni_choice, 
+                           lambda t: textstat.flesch_reading_ease(t), 
+                           "Reading Ease", "#F2FDED")
 
     else:
-        st.info("Upload a policy in the sidebar to compare it with corpus policies.")
+        st.info("Upload a policy to compare it with other universities' policies.")
 
 
 
