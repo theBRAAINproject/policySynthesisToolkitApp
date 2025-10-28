@@ -1151,17 +1151,8 @@ elif mode == "Upload":
                     st.markdown(f"**{uni}**")
                     st.badge(f"Similarity: {simscore:.3f}", icon=":material/analytics:", color="blue")
                 # st.badge(f"Policies loaded: {len(display_df)}", icon=":material/check:", color="blue")
-                with st.container(border=True):
-                    st.write(excerpt + ("..." if len(full_text)>800 else ""))
-
-                # sel_row = sel_df.iloc[0]
-                # #if logo of university exists in img/logos/filename.png display it
-                # logofilename = os.path.splitext(sel_row.get('filename','').strip())[0]
-                # logo_path = f"img/{logofilename}.png"
-                # if os.path.exists(logo_path):
-                #     st.image(logo_path, width=300)
-                # st.subheader(f"{uni_choice}")
-
+                    with st.container(border=True):
+                        st.write(excerpt + ("..." if len(full_text)>800 else ""))
 
 
 
