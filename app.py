@@ -653,10 +653,10 @@ if mode == "Explore":
         #show topics as 
         # st.text(df[[f'CorEx_topic_{i}' for i in range(n_topics)]].head())
 
-
-
-
-
+    # show topics as a bubble chart, with each bubble represeting the size of topic in the corpora 
+    topic_sizes = df[[f'CorEx_topic_{i}' for i in range(n_topics)]].sum()
+    fig = px.scatter(x=topic_sizes.index, y=topic_sizes.values, size=topic_sizes.values, title="CorEx Topic Sizes")
+    st.plotly_chart(fig)
 
 
 # #------------------------------------------------------------------------------------------------
@@ -1123,13 +1123,18 @@ elif mode == "Upload":
 
             st.markdown("**Top matches (excerpt)**")
             top_n = sim_df.head(3)
-            st.dataframe(sim_df.head(3))
+            # st.dataframe(sim_df.head(3))
+            
             for _, r in top_n.iterrows():
+                #find corresponding value of col 'Filename' in df by searching university name from sim_df, same as filename var
+                filename = df.loc[df['university'] == r['university'], 'filename'].values[0]
+
                 # Get university name from col 'Filename' if exists, else from 'university'
                 uni = r['University'] if 'University' in r else r['university']
                 sel_row = sim_df.iloc[0]
                 # #if logo of university exists in img/logos/filename.png display it
-                logofilename = os.path.splitext(sel_row.get('filename','').strip())[0]
+                # logofilename = os.path.splitext(sel_row.get('filename','').strip())[0]
+                logofilename = os.path.splitext(filename.strip())[0]
                 logo_path = f"img/{logofilename}.png"
                 st.write("logo:", logo_path)
                 if os.path.exists(logo_path):
