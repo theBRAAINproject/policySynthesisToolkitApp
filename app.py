@@ -457,7 +457,9 @@ if mode == "Explore":
             st.download_button("Download metrics (CSV)", data=metrics_df.to_csv(index=False).encode('utf-8'), file_name="corpus_metrics.csv", mime="text/csv")
         
         #show all keywords as a plotly bar chart
-        fig = px.bar(kw_sum, x='keyword', y='count', title='All Keywords')
+        kw_sum_df = kw_sum.reset_index()
+        kw_sum_df.columns = ['keyword', 'count']
+        fig = px.bar(kw_sum_df, x='keyword', y='count', title='All Keywords')
         st.plotly_chart(fig)
 
         # #add selected keywords as input chips and show their counts across corpus as graph
