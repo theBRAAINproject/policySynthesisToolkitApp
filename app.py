@@ -610,8 +610,7 @@ if mode == "Explore":
             st.plotly_chart(fig)
 
 
-            st.download_button("Download metrics (CSV)", data=metrics_df.to_csv(index=False).encode('utf-8'), file_name="corpus_metrics.csv", mime="text/csv")
-        
+  
         #show all keywords as a plotly bar chart
         kw_sum_df = kw_sum.reset_index()
         kw_sum_df.columns = ['keyword', 'count']
@@ -632,7 +631,64 @@ if mode == "Explore":
         wordcloud = generate_word_cloud(display_df['policy_text'],"Combined Policies")
 
     with st.expander("Common Topics Found", expanded=True):
-        # st.subheader("CorEx Topic Modeling:")
+
+        # show topics as a bubble chart, with each bubble represeting the size of topic in the corpora 
+        topic_sizes = df[[f'CorEx_topic_{i}' for i in range(n_topics)]].sum()
+        # fig = px.scatter(x=topic_sizes.index, y=topic_sizes.values, size=topic_sizes.values, title="CorEx Topic Sizes")
+        # st.plotly_chart(fig)
+
+        #show topics as circles using  circlify
+
+        circles = circlify.circlify(
+            topic_sizes.values.tolist(), 
+            show_enclosure=False, 
+            target_enclosure=circlify.Circle(x=0, y=0, r=1)
+        )
+
+        # Get first 3 words for each topic from the CorEx model
+        if 'corex_model' in globals():
+            topics_top3 = corex_model.get_topics(n_words=3)
+            topic_labels = []
+            for i, t in enumerate(topics_top3[:len(topic_sizes)]):
+                if t:
+                    words = [w for w, *rest in t][:3]  # take top 3 words
+                    topic_labels.append(f"Group {i+1}:\n" + '\n'.join(words))
+                else:
+                    topic_labels.append(f"Group {i+1}")
+        else:
+            topic_labels = [f"Group {i+1}" for i in range(len(topic_sizes))]
+        
+        fig, ax = plt.subplots(figsize=(10,10))
+        ax.axis('off')
+        
+        # import matplotlib.colors as mcolors
+        
+        # Generate random light colors
+        light_colors = ['lightblue', 'lightgreen', 'lightcoral', 'lightyellow', 
+                    'lightpink', 'lightgray', 'lightcyan', 'lavender',
+                    'mistyrose', 'honeydew', 'aliceblue', 'seashell',
+                    'linen', 'oldlace', 'floralwhite', 'mintcream']
+        
+        # Manually draw circles using matplotlib
+        for i, circle in enumerate(circles):
+            color = light_colors[i % len(light_colors)]
+            patch = plt.Circle((circle.x, circle.y), circle.r, alpha=0.6, 
+                            facecolor=color, edgecolor='black', linewidth=2)
+            ax.add_patch(patch)
+        
+        # Add text labels inside each circle
+        for circle, label in zip(circles, topic_labels):
+            ax.text(circle.x, circle.y, label, ha='center', va='center', 
+                    fontsize=8, wrap=True, 
+                    bbox=dict(facecolor='white', alpha=0.7, boxstyle='round,pad=0.3'))
+        
+        # Set equal aspect ratio and limits
+        ax.set_xlim(-1.1, 1.1)
+        ax.set_ylim(-1.1, 1.1)
+        ax.set_aspect('equal')
+        st.pyplot(fig)  
+    with st.expander("Full List of Topics Found", expanded=True):
+                # st.subheader("CorEx Topic Modeling:")
         anchors = topics_from_thematic_analysis
         n_topics = len(anchors)+1
         # n_topics=14
@@ -654,54 +710,10 @@ if mode == "Explore":
         #show topics as 
         # st.text(df[[f'CorEx_topic_{i}' for i in range(n_topics)]].head())
 
-    # show topics as a bubble chart, with each bubble represeting the size of topic in the corpora 
-    topic_sizes = df[[f'CorEx_topic_{i}' for i in range(n_topics)]].sum()
-    # fig = px.scatter(x=topic_sizes.index, y=topic_sizes.values, size=topic_sizes.values, title="CorEx Topic Sizes")
-    # st.plotly_chart(fig)
-
-    #show topics as circles using  circlify
-
-    circles = circlify.circlify(
-        topic_sizes.values.tolist(), 
-        show_enclosure=False, 
-        target_enclosure=circlify.Circle(x=0, y=0, r=1)
-    )
-
-    # Get first 3 words for each topic from the CorEx model
-    if 'corex_model' in globals():
-        topics_top3 = corex_model.get_topics(n_words=3)
-        topic_labels = []
-        for i, t in enumerate(topics_top3[:len(topic_sizes)]):
-            if t:
-                words = [w for w, *rest in t][:3]  # take top 3 words
-                topic_labels.append(f"Group {i+1}:\n{', '.join(words)}")
-            else:
-                topic_labels.append(f"Group {i+1}")
-    else:
-        topic_labels = [f"Group {i+1}" for i in range(len(topic_sizes))]
-    
-    fig, ax = plt.subplots(figsize=(10,10))
-    ax.axis('off')
-    
-    # Manually draw circles using matplotlib
-    for circle in circles:
-        patch = plt.Circle((circle.x, circle.y), circle.r, alpha=0.6, 
-                          facecolor='lightblue', edgecolor='black', linewidth=2)
-        ax.add_patch(patch)
-    
-    # Add text labels inside each circle
-    for circle, label in zip(circles, topic_labels):
-        ax.text(circle.x, circle.y, label, ha='center', va='center', 
-                fontsize=8, wrap=True, bbox=dict(boxstyle="round,pad=0.3", 
-                facecolor='white', alpha=0.7))
-    
-    # Set equal aspect ratio and limits
-    ax.set_xlim(-1.1, 1.1)
-    ax.set_ylim(-1.1, 1.1)
-    ax.set_aspect('equal')
-    st.pyplot(fig)  
-
-
+    with st.expander("Advance Options", expanded=False):
+        # st.download_button("Download similarity table (CSV)", data=csv, file_name="similarity_results.csv", mime="text/csv")
+        st.download_button("Download metrics (CSV)", data=metrics_df.to_csv(index=False).encode('utf-8'), file_name="corpus_metrics.csv", mime="text/csv")
+        
 # #------------------------------------------------------------------------------------------------
 # # ANALYSE------------------------------------------------------------------------------------------
 elif mode == "Analyse":
