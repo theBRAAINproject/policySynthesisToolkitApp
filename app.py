@@ -676,13 +676,17 @@ if mode == "Explore":
             for i, t in enumerate(topics_top3[:len(topic_sizes)]):
                 if t:
                     words = [w for w, *rest in t][:3]  # take top 3 words
-                    topic_labels.append(f"Group {i+1}:\n" + '\n'.join(words))
+                    topic_labels.append(f'\n'.join(words))
+                    # topic_labels.append(f"Group {i+1}:\n" + '\n'.join(words))
                 else:
-                    topic_labels.append(f"Group {i+1}")
+                    topic_labels.append(f" ")
+                    # topic_labels.append(f"Group {i+1}")
         else:
             topic_labels = [f"Group {i+1}" for i in range(len(topic_sizes))]
+            # topic_labels = [f"Group {i+1}" for i in range(len(topic_sizes))]
         
-        fig, ax = plt.subplots(figsize=(8,3))
+        fig, ax = plt.subplots()
+        # fig, ax = plt.subplots(figsize=(6,2))
         ax.axis('off')
         
         # import matplotlib.colors as mcolors
@@ -705,13 +709,15 @@ if mode == "Explore":
             # Calculate font size based on circle radius to ensure text fits
             font_size = min(8, max(4, circle.r * 10))
             ax.text(circle.x, circle.y, label, ha='center', va='center', 
-                fontsize=font_size, wrap=True, 
-                bbox=dict(boxstyle="round,pad=0.1", facecolor='white', alpha=0.7))
+            fontsize=font_size, wrap=True)
         
         # Set equal aspect ratio and limits
         ax.set_xlim(-1.1, 1.1)
         ax.set_ylim(-1.1, 1.1)
         ax.set_aspect('equal')
+        
+        # Adjust figure size for landscape mode
+        fig.set_size_inches(10, 6)
         st.pyplot(fig)  
     
     with st.expander("Full List of Topics Found", expanded=False):
