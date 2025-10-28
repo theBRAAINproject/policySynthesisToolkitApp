@@ -655,9 +655,9 @@ if mode == "Explore":
         # st.text(df[[f'CorEx_topic_{i}' for i in range(n_topics)]].head())
 
     # show topics as a bubble chart, with each bubble represeting the size of topic in the corpora 
-    topic_sizes = df[[f'CorEx_topic_{i}' for i in range(n_topics)]].sum()
-    fig = px.scatter(x=topic_sizes.index, y=topic_sizes.values, size=topic_sizes.values, title="CorEx Topic Sizes")
-    st.plotly_chart(fig)
+    # topic_sizes = df[[f'CorEx_topic_{i}' for i in range(n_topics)]].sum()
+    # fig = px.scatter(x=topic_sizes.index, y=topic_sizes.values, size=topic_sizes.values, title="CorEx Topic Sizes")
+    # st.plotly_chart(fig)
 
     #show topics as circles using  circlify
 
@@ -666,6 +666,12 @@ if mode == "Explore":
         show_enclosure=False, 
         target_enclosure=circlify.Circle(x=0, y=0, r=1)
     )
+    fig, ax = plt.subplots(figsize=(10,10))
+    ax.axis('off')
+    circlify.draw(circles, ax=ax)
+    st.pyplot(fig)  
+
+
 # #------------------------------------------------------------------------------------------------
 # # ANALYSE------------------------------------------------------------------------------------------
 elif mode == "Analyse":
