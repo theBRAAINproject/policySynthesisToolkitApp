@@ -1140,7 +1140,7 @@ elif mode == "Upload":
 
                 simscore = r['similarity']
                 full_text = df.loc[df['university']==uni, 'policy_text'].values[0]
-                excerpt = full_text[:800].replace("\n", " ")
+                # excerpt = full_text[:800].replace("\n", " ")
 
                 col1, col2 = st.columns([3,1])
                 with col2:  
@@ -1152,7 +1152,9 @@ elif mode == "Upload":
                     st.badge(f"Similarity: {simscore:.3f}", icon=":material/analytics:", color="blue")
                 # st.badge(f"Policies loaded: {len(display_df)}", icon=":material/check:", color="blue")
                 with st.container(border=True):
-                    st.write(excerpt + ("..." if len(full_text)>800 else ""))
+                    # st.write(excerpt + ("..." if len(full_text)>800 else ""))
+                # with st.expander("Uploaded policy text", expanded=True):
+                    st.text_area(f"Policy text {uni}", value=full_text, height=250, label_visibility="collapsed")
 
 
 
