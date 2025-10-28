@@ -1123,6 +1123,7 @@ elif mode == "Upload":
 
             st.markdown("**Top matches (excerpt)**")
             top_n = sim_df.head(3)
+            st.dataframe(sim_df.head(3))
             for _, r in top_n.iterrows():
                 # Get university name from col 'Filename' if exists, else from 'university'
                 uni = r['University'] if 'University' in r else r['university']
