@@ -1136,15 +1136,20 @@ elif mode == "Upload":
                 # logofilename = os.path.splitext(sel_row.get('filename','').strip())[0]
                 logofilename = os.path.splitext(filename.strip())[0]
                 logo_path = f"img/{logofilename}.png"
-                st.write("logo:", logo_path)
-                if os.path.exists(logo_path):
-                    st.image(logo_path, width=120)  
+                # st.write("logo:", logo_path)
+
                 simscore = r['similarity']
                 full_text = df.loc[df['university']==uni, 'policy_text'].values[0]
                 excerpt = full_text[:800].replace("\n", " ")
+
+                col1, col2 = st.columns([4,1])
+                with col2:  
+                    if os.path.exists(logo_path):
+                        st.image(logo_path, width=200)  
+                with col1:
                 # st.markdown(f"**{uni}**, Similarity Score: {simscore:.3f}, out of 1.000")
-                st.markdown(f"**{uni}**")
-                st.badge(f"Similarity: {simscore:.3f}", icon=":material/analytics:", color="blue")
+                    st.markdown(f"**{uni}**")
+                    st.badge(f"Similarity: {simscore:.3f}", icon=":material/analytics:", color="blue")
                 # st.badge(f"Policies loaded: {len(display_df)}", icon=":material/check:", color="blue")
                 with st.container(border=True):
                     st.write(excerpt + ("..." if len(full_text)>800 else ""))
