@@ -710,7 +710,7 @@ if mode == "Explore":
         for circle, label in zip(circles, topic_labels):
             # Calculate font size based on circle radius to ensure text fits
             # font_size = min(8, max(4, circle.r * 10))
-            font_size = min(6, max(3, circle.r * 10))
+            font_size = min(12, max(6, circle.r * 20))
             ax.text(circle.x, circle.y, label, ha='center', va='center', 
             fontsize=font_size, wrap=True)
         
