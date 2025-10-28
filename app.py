@@ -702,7 +702,7 @@ if mode == "Explore":
         # Add text labels inside each circle
         for circle, label in zip(circles, topic_labels):
             ax.text(circle.x, circle.y, label, ha='center', va='center', 
-                    fontsize=8, wrap=True))
+                    fontsize=8, wrap=True)
         
         # Set equal aspect ratio and limits
         ax.set_xlim(-1.1, 1.1)
