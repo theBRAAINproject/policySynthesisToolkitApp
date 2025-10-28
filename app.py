@@ -1124,7 +1124,8 @@ elif mode == "Upload":
             st.markdown("**Top matches (excerpt)**")
             top_n = sim_df.head(3)
             for _, r in top_n.iterrows():
-                uni = r['filename']
+                # Get university name from col 'Filename' if exists, else from 'university'
+                uni = r['Filename']
                 #add uni logo, if exists in img/, with filename, e.g., img/uni_name.*** strip extension and add .png
                 logo_path = f"img/{uni.replace(' ','_').lower()}.png"
                 if os.path.exists(logo_path):
