@@ -1096,13 +1096,16 @@ elif mode == "Upload":
             vectorizer, X_all = build_tfidf_matrix(all_texts)
             uploaded_vec = X_all[-1]
             
-            scatterPlot2col(df, uploaded_text, "Uploaded Policy", 
-                           lambda t: cosine_similarity(
-                               vectorizer.transform([str(t)]),
-                               uploaded_vec.reshape(1, -1)
-                           ).flatten()[0] if str(t).strip() else 0.0,
-                           "Similarity Score", "#FAF7E6", "{:.3f}")
-
+            # scatterPlot2col(df, uploaded_text, "Uploaded Policy", 
+            #                lambda t: cosine_similarity(
+            #                    vectorizer.transform([str(t)]),
+            #                    uploaded_vec.reshape(1, -1)
+            #                ).flatten()[0] if str(t).strip() else 0.0,
+            #                "Similarity Score", "#FAF7E6", "{:.3f}")
+            
+            # scatterPlot2col(df, sel_row, uni_choice, 
+            #                lambda t: len(re.findall(r"\w+", str(t))), 
+            #                "Word Count", "#EDF1FD", "{:,.0f}")
 
 
 
