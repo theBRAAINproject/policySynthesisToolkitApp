@@ -458,7 +458,60 @@ def scatterPlot2col(
 #     words = text.split()
 #     return len(words) / max(1, len(sentences))
 
+def tfidf_similarity(corpus_texts, corpus_meta, uploaded_text, build_tfidf_matrix_func):
 
+
+    #             vectorizer, X = build_tfidf_matrix(corpus_texts + [uploaded_text])
+    #             qvec = X[-1]
+    #             corpus_X = X[:-1]
+    #             sims = cosine_similarity(corpus_X, qvec).flatten()
+    #             sim_df = pd.DataFrame({
+    #                 "university": corpus_meta,
+    #                 "similarity": sims,
+    #                 "words": [len(re.findall(r"\w+", t)) for t in corpus_texts],
+    #                 "chars": [len(t) for t in corpus_texts]
+    #             }).sort_values("similarity", ascending=False).reset_index(drop=True)
+    #             st.dataframe(sim_df.head(20))
+    """
+    Compare an uploaded text to a corpus of documents using TF-IDF cosine similarity.
+
+    Parameters
+    ----------
+    corpus_texts : list[str]
+        List of corpus documents (text only).
+    corpus_meta : list[str]
+        Metadata for each document (e.g., university names).
+    uploaded_text : str
+        The uploaded text to compare against the corpus.
+    build_tfidf_matrix_func : callable
+        Function that takes a list of texts and returns (vectorizer, X_matrix).
+    top_n : int, optional
+        Number of top similar documents to display or return (default=20).
+    show_in_streamlit : bool, optional
+        If True, displays dataframe in Streamlit; otherwise returns it.
+
+    Returns
+    -------
+    sim_df : pd.DataFrame
+        Sorted DataFrame with columns: university, similarity, words, chars.
+    """
+
+    # Build TF-IDF representation
+    vectorizer, X = build_tfidf_matrix_func(corpus_texts + [uploaded_text])
+    qvec = X[-1]           # query (uploaded)
+    corpus_X = X[:-1]      # corpus
+    sims = cosine_similarity(corpus_X, qvec).flatten()
+
+    # Build similarity dataframe
+    sim_df = pd.DataFrame({
+        "university": corpus_meta,
+        "similarity": sims,
+        "words": [len(re.findall(r"\w+", t)) for t in corpus_texts],
+        "chars": [len(t) for t in corpus_texts]
+    }).sort_values("similarity", ascending=False).reset_index(drop=True)
+
+
+    return sim_df
 
 #------------------------------------------------------------------------------------------------
 # MAIN-------------------------------------------------------------------------------------------
@@ -1019,22 +1072,27 @@ elif mode == "Upload":
         else:
             with st.expander("Similarity with other Policies", expanded=True):
             # st.markdown("**Similarity with other university policies (TF-IDF cosine)**")
-                vectorizer, X = build_tfidf_matrix(corpus_texts + [uploaded_text])
-                qvec = X[-1]
-                corpus_X = X[:-1]
-                sims = cosine_similarity(corpus_X, qvec).flatten()
-                sim_df = pd.DataFrame({
-                    "university": corpus_meta,
-                    "similarity": sims,
-                    "words": [len(re.findall(r"\w+", t)) for t in corpus_texts],
-                    "chars": [len(t) for t in corpus_texts]
-                }).sort_values("similarity", ascending=False).reset_index(drop=True)
+                # vectorizer, X = build_tfidf_matrix(corpus_texts + [uploaded_text])
+                # qvec = X[-1]
+                # corpus_X = X[:-1]
+                # sims = cosine_similarity(corpus_X, qvec).flatten()
+                # sim_df = pd.DataFrame({
+                #     "university": corpus_meta,
+                #     "similarity": sims,
+                #     "words": [len(re.findall(r"\w+", t)) for t in corpus_texts],
+                #     "chars": [len(t) for t in corpus_texts]
+                # }).sort_values("similarity", ascending=False).reset_index(drop=True)
+                sim_df = tfidf_similarity(
+                    corpus_texts=df['policy_text'].tolist(),
+                    corpus_meta=df['university'].tolist(),
+                    uploaded_text=uploaded_text,
+                    build_tfidf_matrix_func=build_tfidf_matrix  # your existing TF-IDF builder
+                )
                 st.dataframe(sim_df.head(20))
+       
+            #add scatterPlot2col for similarity scores, based on TF-IDF similarity, as in sim_df, sims
+            scatterPlot2col(sim_df, {'policy_text': uploaded_text}, "Uploaded Policy", "Similarity Score", "#EDF1FD", "{:.3f}")
 
-            #add scatterPlot2col for similarity scores, out of 100  
-            scatterPlot2col(df, {'policy_text': uploaded_text}, "Uploaded Policy", 
-                       lambda t: cosine_similarity(vectorizer.transform([str(t)]), qvec).flatten()[0]*100, 
-                       "Similarity Score(%)", "#FEF2E7", "{:,.2f}")       
 
 
 
