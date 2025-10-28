@@ -16,3 +16,4 @@ spacy
 pyLDAvis
 corextopic
 plotly
+circlify
