@@ -624,7 +624,9 @@ if mode == "Explore":
                     options=kw_sum.index.str.replace('kw_', '').tolist(), 
                     default=kw_sum.index.str.replace('kw_', '').tolist()
                 )
-
+                #st badge to show keywords selected
+                st.badge(f"Keywords selected: {len(selected_keywords)}", icon=":material/tag:", color="blue")
+                
                 if selected_keywords:
                     # Filter the keyword data based on selection
                     selected_kw_cols = [f'kw_{kw}' for kw in selected_keywords]
@@ -635,8 +637,9 @@ if mode == "Explore":
                     filtered_kw_df.columns = ['keyword', 'count']
                     filtered_kw_df['keyword'] = filtered_kw_df['keyword'].str.replace('kw_', '')
                     
-                    fig_filtered = px.bar(filtered_kw_df, x='keyword', y='count', 
-                                         title=f'Selected Keywords ({len(selected_keywords)} selected)')
+                    fig_filtered = px.bar(filtered_kw_df, x='keyword', y='count')
+                    # , 
+                                        #  title=f'Selected Keywords ({len(selected_keywords)} selected)')
                     st.plotly_chart(fig_filtered)
                 else:
                     st.info("Select keywords to display in the chart")
