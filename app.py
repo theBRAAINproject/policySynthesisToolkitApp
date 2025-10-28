@@ -1125,7 +1125,7 @@ elif mode == "Upload":
             top_n = sim_df.head(3)
             for _, r in top_n.iterrows():
                 # Get university name from col 'Filename' if exists, else from 'university'
-                # uni = r['Filename']
+                uni = r['University'] if 'University' in r else r['university']
                 sel_row = sim_df.iloc[0]
                 # #if logo of university exists in img/logos/filename.png display it
                 logofilename = os.path.splitext(sel_row.get('filename','').strip())[0]
