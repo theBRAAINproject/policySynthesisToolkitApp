@@ -1130,7 +1130,7 @@ elif mode == "Upload":
                 # #if logo of university exists in img/logos/filename.png display it
                 logofilename = os.path.splitext(sel_row.get('filename','').strip())[0]
                 logo_path = f"img/{logofilename}.png"
-                print(logo_path)
+                st.write("logo:", logo_path)
                 if os.path.exists(logo_path):
                     st.image(logo_path, width=120)  
                 simscore = r['similarity']
