@@ -681,7 +681,7 @@ if mode == "Explore":
         else:
             topic_labels = [f"Group {i+1}" for i in range(len(topic_sizes))]
         
-        fig, ax = plt.subplots(figsize=(10,4))
+        fig, ax = plt.subplots(figsize=(8,3))
         ax.axis('off')
         
         # import matplotlib.colors as mcolors
@@ -696,13 +696,16 @@ if mode == "Explore":
         for i, circle in enumerate(circles):
             color = light_colors[i % len(light_colors)]
             patch = plt.Circle((circle.x, circle.y), circle.r, alpha=0.6, 
-                            facecolor=color, edgecolor='black', linewidth=2)
+                    facecolor=color, edgecolor='black', linewidth=0.5)
             ax.add_patch(patch)
         
-        # Add text labels inside each circle
+        # Add text labels inside each circle with word wrapping to fit
         for circle, label in zip(circles, topic_labels):
+            # Calculate font size based on circle radius to ensure text fits
+            font_size = min(8, max(4, circle.r * 10))
             ax.text(circle.x, circle.y, label, ha='center', va='center', 
-                    fontsize=8, wrap=True)
+                fontsize=font_size, wrap=True, 
+                bbox=dict(boxstyle="round,pad=0.1", facecolor='white', alpha=0.7))
         
         # Set equal aspect ratio and limits
         ax.set_xlim(-1.1, 1.1)
