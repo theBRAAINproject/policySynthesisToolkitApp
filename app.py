@@ -266,8 +266,9 @@ def generate_word_cloud(texts: pd.Series, name):
     combined_text = " ".join(texts.astype(str).tolist())
     # extend stopwords with some common artifacts from scraped policies
     stopwords = set(STOPWORDS)
-    stopwords.update(['https', 'http', 'www','use' , 'will', 'using', 'must', 'com', 'org', 'edu', 'page', 'policy', 'policytext', 'may', 'take', 'top'])
-
+    stopwords.update(['https', 'ac', 'co', 'http', 'www','use' , 'will', 'using', 'must', 'com', 'org', 'edu', 'page', 'policy', 'policytext', 'may', 'take', 'top'])
+    #put all single letters into stopwords
+    stopwords.update(list("abcdefghijklmnopqrstuvwxyz"))
     wc = WordCloud(width=1200, height=600, background_color='white',
                    stopwords=stopwords, collocations=False).generate(combined_text)
 
@@ -626,7 +627,7 @@ if mode == "Explore":
                 )
                 #st badge to show keywords selected
                 st.badge(f"Keywords selected: {len(selected_keywords)}", icon=":material/tag:", color="blue")
-                
+
                 if selected_keywords:
                     # Filter the keyword data based on selection
                     selected_kw_cols = [f'kw_{kw}' for kw in selected_keywords]
