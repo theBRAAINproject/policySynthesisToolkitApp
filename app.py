@@ -687,6 +687,8 @@ if mode == "Explore":
         
         fig, ax = plt.subplots()
         # fig, ax = plt.subplots(figsize=(6,2))
+        # Adjust figure size for landscape mode
+        fig.set_size_inches(10, 6)
         ax.axis('off')
         
         # import matplotlib.colors as mcolors
@@ -716,8 +718,7 @@ if mode == "Explore":
         ax.set_ylim(-1.1, 1.1)
         ax.set_aspect('equal')
         
-        # Adjust figure size for landscape mode
-        fig.set_size_inches(10, 6)
+
         st.pyplot(fig)  
     
     with st.expander("Full List of Topics Found", expanded=False):
