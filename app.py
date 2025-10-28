@@ -1002,7 +1002,7 @@ elif mode == "Upload":
         # st.text_area("Uploaded policy text", value=uploaded_text, height=250, label_visibility="collapsed")
 
         with st.expander("Word Cloud for Uploaded Policy", expanded=True):
-            wordcloud = generate_word_cloud([uploaded_text], "Uploaded Policy")
+            wordcloud = generate_word_cloud(pd.Series([uploaded_text]), "Uploaded Policy")
 
         up_bs = basic_stats(uploaded_text)
         up_rd = readability_metrics(uploaded_text)
@@ -1030,6 +1030,13 @@ elif mode == "Upload":
                     "chars": [len(t) for t in corpus_texts]
                 }).sort_values("similarity", ascending=False).reset_index(drop=True)
                 st.dataframe(sim_df.head(20))
+
+            #add scatterPlot2col for similarity scores, out of 100  
+            scatterPlot2col(df, {'policy_text': uploaded_text}, "Uploaded Policy", 
+                       lambda t: cosine_similarity(vectorizer.transform([str(t)]), qvec).flatten()[0]*100, 
+                       "Similarity Score(%)", "#FEF2E7", "{:,.2f}")       
+
+
 
             # if HAS_SBERT:
             #     st.markdown("**Semantic similarity (sentence-transformers)**")
