@@ -1135,7 +1135,7 @@ elif mode == "Upload":
                 simscore = r['similarity']
                 full_text = df.loc[df['university']==uni, 'policy_text'].values[0]
                 excerpt = full_text[:800].replace("\n", " ")
-                st.markdown(f"**{uni}** — TF-IDF similarity {simscore:.3f}")
+                st.markdown(f"**{uni}**: similarity score{simscore:.3f}")
                 st.write(excerpt + ("..." if len(full_text)>800 else ""))
 
                 # sel_row = sel_df.iloc[0]
