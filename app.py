@@ -1207,7 +1207,18 @@ elif mode == "Upload":
                     with col1:
                     # st.markdown(f"**{uni}**, Similarity Score: {simscore:.3f}, out of 1.000")
                         st.markdown(f"**{uni}**")
-                        st.badge(f"Similarity Score: {simscore:.3f}, out of 1.000", icon=":material/analytics:", color="blue")
+                        #if score more then 0.85 color green, else if more than 0.5 color orange, else blue
+                        if simscore >= 0.85:
+                            scorecolor="green"
+                            #icon up arrow
+                            scoreicon=":material/trending-up:"
+                        elif simscore >= 0.5:
+                            scorecolor="orange"
+                            scoreicon=":material/trending-neutral:"
+                        else:
+                            scorecolor="blue"
+                            scoreicon=":material/trending-down:"
+                        st.badge(f"Similarity Score: {simscore:.3f}, out of 1.000", icon=scoreicon, color=scorecolor)
                     # st.badge(f"Policies loaded: {len(display_df)}", icon=":material/check:", color="blue")
                         # st.write(excerpt + ("..." if len(full_text)>800 else ""))
                     # with st.expander("Uploaded policy text", expanded=True):
