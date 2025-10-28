@@ -1149,7 +1149,7 @@ elif mode == "Upload":
                 with col1:
                 # st.markdown(f"**{uni}**, Similarity Score: {simscore:.3f}, out of 1.000")
                     st.markdown(f"**{uni}**")
-                    st.badge(f"Similarity: {simscore:.3f}", icon=":material/analytics:", color="blue")
+                    st.badge(f"Similarity Score: {simscore:.3f}, out of 1.000", icon=":material/analytics:", color="blue")
                 # st.badge(f"Policies loaded: {len(display_df)}", icon=":material/check:", color="blue")
                 with st.container(border=True):
                     # st.write(excerpt + ("..." if len(full_text)>800 else ""))
