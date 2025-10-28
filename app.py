@@ -996,42 +996,52 @@ elif mode == "Upload":
     # The uploader is available in the sidebar by default; show upload preview and comparisons here
     if uploaded:
         st.success(f"Uploaded: {uploaded_name}")
-        st.markdown("**Uploaded Policy Text**")
-        st.text_area("Uploaded policy text", value=uploaded_text, height=250, label_visibility="collapsed")
+        with st.expander("Uploaded policy text", expanded=True):
+            st.text_area("Uploaded policy text", value=uploaded_text, height=250, label_visibility="collapsed")
+        # st.markdown("**Uploaded Policy Text**")
+        # st.text_area("Uploaded policy text", value=uploaded_text, height=250, label_visibility="collapsed")
+
+        with st.expander("Word Cloud for Uploaded Policy", expanded=True):
+            wordcloud = generate_word_cloud([uploaded_text], "Uploaded Policy")
+
         up_bs = basic_stats(uploaded_text)
         up_rd = readability_metrics(uploaded_text)
-        st.subheader("Uploaded policy metrics")
-        st.write(pd.DataFrame([{**up_bs, **up_rd}]).T.rename(columns={0:"value"}))
+        with st.expander("Uploaded Policy Stats", expanded=True):
+            st.subheader("Uploaded policy metrics")
+            st.write(pd.DataFrame([{**up_bs, **up_rd}]).T.rename(columns={0:"value"}))
+
+
 
         corpus_texts = df['policy_text'].astype(str).tolist()
         corpus_meta = df['university'].astype(str).tolist()
         if len(corpus_texts) == 0:
             st.warning("No corpus policies available to compare against.")
         else:
-            st.markdown("**Similarity with other university policies (TF-IDF cosine)**")
-            vectorizer, X = build_tfidf_matrix(corpus_texts + [uploaded_text])
-            qvec = X[-1]
-            corpus_X = X[:-1]
-            sims = cosine_similarity(corpus_X, qvec).flatten()
-            sim_df = pd.DataFrame({
-                "university": corpus_meta,
-                "similarity": sims,
-                "words": [len(re.findall(r"\w+", t)) for t in corpus_texts],
-                "chars": [len(t) for t in corpus_texts]
-            }).sort_values("similarity", ascending=False).reset_index(drop=True)
-            st.dataframe(sim_df.head(20))
+            with st.expander("Similarity with other Policies", expanded=True):
+            # st.markdown("**Similarity with other university policies (TF-IDF cosine)**")
+                vectorizer, X = build_tfidf_matrix(corpus_texts + [uploaded_text])
+                qvec = X[-1]
+                corpus_X = X[:-1]
+                sims = cosine_similarity(corpus_X, qvec).flatten()
+                sim_df = pd.DataFrame({
+                    "university": corpus_meta,
+                    "similarity": sims,
+                    "words": [len(re.findall(r"\w+", t)) for t in corpus_texts],
+                    "chars": [len(t) for t in corpus_texts]
+                }).sort_values("similarity", ascending=False).reset_index(drop=True)
+                st.dataframe(sim_df.head(20))
 
-            if HAS_SBERT:
-                st.markdown("**Semantic similarity (sentence-transformers)**")
-                with st.spinner("Computing SBERT embeddings..."):
-                    model = build_sbert_model()
-                    if model is not None:
-                        emb_sims = compute_embedding_sim(model, corpus_texts, uploaded_text)
-                        sim_df['sbert_similarity'] = emb_sims
-                        sim_df = sim_df.sort_values('sbert_similarity', ascending=False)
-                        st.dataframe(sim_df[['university','sbert_similarity','similarity']].head(20))
-                    else:
-                        st.info("SBERT model not available.")
+            # if HAS_SBERT:
+            #     st.markdown("**Semantic similarity (sentence-transformers)**")
+            #     with st.spinner("Computing SBERT embeddings..."):
+            #         model = build_sbert_model()
+            #         if model is not None:
+            #             emb_sims = compute_embedding_sim(model, corpus_texts, uploaded_text)
+            #             sim_df['sbert_similarity'] = emb_sims
+            #             sim_df = sim_df.sort_values('sbert_similarity', ascending=False)
+            #             st.dataframe(sim_df[['university','sbert_similarity','similarity']].head(20))
+            #         else:
+            #             st.info("SBERT model not available.")
 
             st.markdown("**Top matches (excerpt)**")
             top_n = sim_df.head(3)
