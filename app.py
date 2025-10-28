@@ -1134,7 +1134,8 @@ elif mode == "Upload":
                     st.image(logo_path, width=120)  
                 simscore = r['similarity']
                 full_text = df.loc[df['university']==uni, 'policy_text'].values[0]
-                excerpt = full_text[:800].replace("\n", " ")
+                with st.container(border=True):
+                    excerpt = full_text[:800].replace("\n", " ")
                 # st.markdown(f"**{uni}**, Similarity Score: {simscore:.3f}, out of 1.000")
                 st.markdown(f"**{uni}**")
                 st.badge(f"Similarity: {simscore:.3f}", icon=":material/analytics:", color="blue")
