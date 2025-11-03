@@ -704,7 +704,7 @@ if mode == "Explore":
             topic_labels = []
             for i, t in enumerate(topics_top3[:len(topic_sizes)]):
                 if t:
-                    words = [w for w, *rest in t][:3]  # take top 3 words
+                    words = [w for w, *rest in t][:6]  # take top 6 words
                     topic_labels.append(f'\n'.join(words))
                     # topic_labels.append(f"Group {i+1}:\n" + '\n'.join(words))
                 else:
@@ -865,19 +865,21 @@ elif mode == "Analyse":
             else:
                 first_words = [''] * len(corex_vals)
 
+            # build labels with the top 6 words for each CorEx topic (fallback to existing first_words)
             # build labels with the top 3 words for each CorEx topic (fallback to existing first_words)
             if 'corex_model' in globals():
                 topics_top3 = corex_model.get_topics(n_words=5)
                 label_words = []
                 for t in topics_top3[:len(corex_vals)]:
                     if t:
-                    # each t is list of tuples like (word, score, ...)
-                        words = [w for w, *rest in t][:3]# take top 3 words
+                        # each t is list of tuples like (word, score, ...)
+                        # take the first element of each tuple (the word) to avoid unused variables
+                        words = [item[0] for item in t][:3]  # take top 3 words
                         label_words.append(', '.join(words))
                     else:
                         label_words.append('')
-                else:
-                    label_words = [fw or '' for fw in first_words]
+            else:
+                label_words = [fw or '' for fw in first_words]
 
             # Build legend labels including top 3 words (for the legend/key only)
             legend_labels = []
