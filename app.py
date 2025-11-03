@@ -355,8 +355,21 @@ def run_corex(policies, anchors):
     with open("corex_results.pkl", "wb") as f:
         pickle.dump((corex_model, doc_term_matrix, corex_policy_topic_means), f)
     #option to download pickle file
+    pkl_path = "save/corex_results.pkl"
     with st.sidebar.expander("Advanced Options", expanded=False):
-        st.download_button("Download Corex Results", "save/corex_results.pkl", file_name=f"corex_results_{date_run}.pkl", mime="application/octet-stream")
+    # allow downloading the saved CoreX pickle
+        
+        if os.path.exists(pkl_path):
+            with open(pkl_path, "rb") as _f:
+                pkl_bytes = _f.read()
+            st.download_button(
+                label="Download CorEx results (corex_results.pkl)",
+                data=pkl_bytes,
+                file_name="corex_results.pkl",
+                mime="application/octet-stream"
+            )
+        else:
+            st.info("No corex_results.pkl file available to download.")
     return corex_model, doc_term_matrix, corex_policy_topic_means
 
 def scatterPlot2col(
