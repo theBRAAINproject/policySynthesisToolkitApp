@@ -58,6 +58,7 @@ try:
     from sentence_transformers import SentenceTransformer
     import torch
     from sklearn.feature_extraction.text import CountVectorizer as _CV
+    from plotly.colors import qualitative
     HAS_SBERT = True
 except Exception:
     HAS_SBERT = False
@@ -295,7 +296,6 @@ anchors_old = [
         ["student", "staff", "faculty"],             # Topic 4: Stakeholders
         ["inclusion", "equity", "accessibility"]   # Topic 5: Inclusivity
     ]
-
 alexes_3_discourses = [
         ["Usability", "adoption", "readiness", "development"],
         ["Fair", "compliance", "ethical", "risk", "biases", "marginalise"],
@@ -363,6 +363,68 @@ def run_corex(policies, anchors):
             pickle.dump((corex_model, doc_term_matrix, corex_policy_topic_means), f)
         st.download_button("Download CorEx results", data=open(pkl_path, "rb").read(), file_name=f"corex_results_{date_run}.pkl")
     return corex_model, doc_term_matrix, corex_policy_topic_means
+
+
+
+
+def corexResults_piechart(corex_model, idx, numTopicsPerGroup=3):
+# n_topics=len(anchors)+1
+    corex_topics = [f'CorEx_topic_{i}' for i in range(n_topics)]
+    # CorEx topic values for this policy (uses existing CorEx_topic_* columns)
+    corex_topic_cols = corex_topics  # provided in notebook as a list of column names
+    corex_vals = df.loc[idx, corex_topic_cols].astype(float).values
+
+    # fig=corexResults_piechart(corex_model, numTopicsPerGroup=3)
+
+    if corex_vals.sum() == 0:
+            # no topics matched -- show a single grey slice
+            fig = go.Figure(data=[go.Pie(
+            labels=['No matching CorEx topics'], 
+            values=[1], 
+            marker=dict(colors=['lightgrey'])
+            )])
+    else:
+        # get first 3 words for each topic from the fitted model and display as pie chart
+        labels = []
+        legend_labels = []
+        # group=[]
+        if True: #'corex_model' in globals():          
+            topics_top3 = corex_model.get_topics(n_words=numTopicsPerGroup)
+            for i, t in enumerate(topics_top3[:len(corex_vals)]):
+                if t:
+                    words = [w for w, *rest in t][:numTopicsPerGroup]  # take top N words
+                    label = ', '.join(words)
+                    labels.append(label)
+                    legend_labels.append(f"Group{i+1} ({corex_vals[i]/corex_vals.sum()*100:.1f}%): {label}")
+                    # group.append([f"Group{i+1}"])
+                else:
+                    labels.append(f"Group{i+1}")
+                    legend_labels.append(f"Group{i+1} ({corex_vals[i]/corex_vals.sum()*100:.1f}%)")
+            # print(legend_labels)
+        # else:
+        #     labels = [f"Group{i+1}" for i in range(len(corex_vals))]
+        #     legend_labels = [f"Group{i+1} ({corex_vals[i]/corex_vals.sum()*100:.1f}%)" for i in range(len(corex_vals))]
+
+
+        # Create pie chart with Plotly
+        fig = go.Figure(data=[go.Pie(
+        labels=legend_labels,
+        values=corex_vals,
+        textinfo='percent',
+        # textinfo='label+percent',
+        textposition='inside',
+        hovertemplate='<b>%{label}</b><br>Value: %{value:.3f}<br>Percent: %{percent}<extra></extra>'
+        )])
+        
+    fig.update_layout(
+        title=f"Topics found in {uni_choice}'s policy",
+        showlegend=True,
+        height=600
+    )
+    return fig
+
+
+
 
 def scatterPlot2col(
     df, 
@@ -460,11 +522,6 @@ def scatterPlot2col(
             """,
             unsafe_allow_html=True
         )
-
-# def avg_words_per_sentence(text):
-#     sentences = text.split('.')
-#     words = text.split()
-#     return len(words) / max(1, len(sentences))
 
 def tfidf_similarity(corpus_texts, corpus_meta, uploaded_text, build_tfidf_matrix_func):
 
@@ -678,13 +735,13 @@ if mode == "Explore":
     anchors = topics_from_thematic_analysis
     n_topics = len(anchors)+1 # n_topics=14
     policies = df['policy_text']
-    if os.path.exists("corex_results.pkl"):
-        with open("corex_results.pkl", "rb") as f:
+    if os.path.exists("save/corex_results.pkl"):
+        with open("save/corex_results.pkl", "rb") as f:
             corex_model, doc_term_matrix, corex_policy_topic_means = pickle.load(f)
-            print(f"Loaded corex results from pickle")
+            print(f"Loaded corex results from pickle -> in main")
     else:   
         corex_model, doc_term_matrix, corex_policy_topic_means = run_corex(policies, anchors=anchors)
-        print("Generated new corex results")
+        print("Generated new corex results -> in main")
     for i in range(n_topics):
         df[f'CorEx_topic_{i}'] = corex_policy_topic_means[f'CorEx_topic_{i}'].values
 
@@ -756,7 +813,10 @@ if mode == "Explore":
         ax.set_aspect('equal')
 
         st.pyplot(fig)
-    
+
+    # with st.expander("Topics found", expanded=False):
+    #     fig= corexResults_piechart(corex_model, numTopicsPerGroup=3)
+    #     st.plotly_chart(fig)
     with st.expander(":blue-background[Full List of Topics Found]", expanded=False):
             # Print top words for each topic
         for i, topic in enumerate(corex_model.get_topics(n_words=10)):
@@ -844,69 +904,63 @@ elif mode == "Analyse":
         if os.path.exists("save/corex_results.pkl"):
             with open("save/corex_results.pkl", "rb") as f:
                 corex_model, doc_term_matrix, corex_policy_topic_means = pickle.load(f)
-                print("Loaded corex results from pickle")
+                print("Loaded corex results from pickle -> in analyse")
         else:   
             corex_model, doc_term_matrix, corex_policy_topic_means = run_corex(policies, anchors=anchors)
-            print("Generated new corex results")
+            print("Generated new corex results -> in analyse")
 
 
         #     # Add topic distribution to df1
         for i in range(n_topics):
             df[f'CorEx_topic_{i}'] = corex_policy_topic_means[f'CorEx_topic_{i}'].values
-    
 
-        # n_topics=len(anchors)+1
-        corex_topics = [f'CorEx_topic_{i}' for i in range(n_topics)]
-        # CorEx topic values for this policy (uses existing CorEx_topic_* columns)
-        corex_topic_cols = corex_topics  # provided in notebook as a list of column names
-        corex_vals = df.loc[idx, corex_topic_cols].astype(float).values
-  
+        fig= corexResults_piechart(corex_model, idx, numTopicsPerGroup=9)
 
         # Pie chart of CorEx topic distribution for this policy (include first 3 words of each topic)
-        if corex_vals.sum() == 0:
-            # no topics matched -- show a single grey slice
-            fig = go.Figure(data=[go.Pie(
-            labels=['No matching CorEx topics'], 
-            values=[1], 
-            marker=dict(colors=['lightgrey'])
-            )])
-        else:
-            # get first 3 words for each topic from the fitted model and display as pie chart
-            labels = []
-            legend_labels = []
-            if 'corex_model' in globals():          
-                topics_top3 = corex_model.get_topics(n_words=5)
-                for i, t in enumerate(topics_top3[:len(corex_vals)]):
-                    if t:
-                        words = [w for w, *rest in t][:3]  # take top 3 words
-                        label = ', '.join(words)
-                        labels.append(label)
-                        legend_labels.append(f"Group{i+1}: {label} ({corex_vals[i]/corex_vals.sum()*100:.1f}%)")
-                    else:
-                        labels.append(f"Group{i+1}")
-                        legend_labels.append(f"Group{i+1} ({corex_vals[i]/corex_vals.sum()*100:.1f}%)")
-            else:
-                labels = [f"Group{i+1}" for i in range(len(corex_vals))]
-                legend_labels = [f"Group{i+1} ({corex_vals[i]/corex_vals.sum()*100:.1f}%)" for i in range(len(corex_vals))]
+        # if corex_vals.sum() == 0:
+        #     # no topics matched -- show a single grey slice
+        #     fig = go.Figure(data=[go.Pie(
+        #     labels=['No matching CorEx topics'], 
+        #     values=[1], 
+        #     marker=dict(colors=['lightgrey'])
+        #     )])
+        # else:
+        #     # get first 3 words for each topic from the fitted model and display as pie chart
+        #     labels = []
+        #     legend_labels = []
+        #     if 'corex_model' in globals():          
+        #         topics_top3 = corex_model.get_topics(n_words=5)
+        #         for i, t in enumerate(topics_top3[:len(corex_vals)]):
+        #             if t:
+        #                 words = [w for w, *rest in t][:3]  # take top 3 words
+        #                 label = ', '.join(words)
+        #                 labels.append(label)
+        #                 legend_labels.append(f"Group{i+1}: {label} ({corex_vals[i]/corex_vals.sum()*100:.1f}%)")
+        #             else:
+        #                 labels.append(f"Group{i+1}")
+        #                 legend_labels.append(f"Group{i+1} ({corex_vals[i]/corex_vals.sum()*100:.1f}%)")
+        #     else:
+        #         labels = [f"Group{i+1}" for i in range(len(corex_vals))]
+        #         legend_labels = [f"Group{i+1} ({corex_vals[i]/corex_vals.sum()*100:.1f}%)" for i in range(len(corex_vals))]
 
-            # Expose the verbose legend labels for use elsewhere (e.g. display the key below the chart)
-            pie_legend_labels = legend_labels
+        #     # Expose the verbose legend labels for use elsewhere (e.g. display the key below the chart)
+        #     pie_legend_labels = legend_labels
             
-            # Create pie chart with Plotly
-            fig = go.Figure(data=[go.Pie(
-            labels=labels,
-            values=corex_vals,
-            textinfo='label+percent',
-            textposition='inside',
-            hovertemplate='<b>%{label}</b><br>Value: %{value:.3f}<br>Percent: %{percent}<extra></extra>'
-            )])
+        #     # Create pie chart with Plotly
+        #     fig = go.Figure(data=[go.Pie(
+        #     labels=labels,
+        #     values=corex_vals,
+        #     textinfo='label+percent',
+        #     textposition='inside',
+        #     hovertemplate='<b>%{label}</b><br>Value: %{value:.3f}<br>Percent: %{percent}<extra></extra>'
+        #     )])
             
-        fig.update_layout(
-            title=f"Topics found in {uni_choice}'s policy",
-            showlegend=True,
-            height=600
-        )
-
+        # fig.update_layout(
+        #     title=f"Topics found in {uni_choice}'s policy",
+        #     showlegend=True,
+        #     height=600
+        # )
+        
         with st.expander(f"Topics found in {uni_choice}'s policy", expanded=True):
             st.plotly_chart(fig, use_container_width=True)
 
@@ -1118,68 +1172,123 @@ elif mode == "Upload":
 
             # Analyze uploaded policy with existing CorEx model and show topic pie chart
             try:
-                if 'corex_model' not in globals() or corex_model is None:
-                    st.info("No fitted CorEx model available to analyze topics for the uploaded policy.")
-                else:
-                    # Reconstruct vocabulary used by the fitted CorEx model
-                    words_vocab = getattr(corex_model, "words", None) or getattr(corex_model, "words_", None)
-                    if not words_vocab:
-                        st.warning("Couldn't recover CorEx vocabulary; unable to vectorize uploaded policy for topic inference.")
+                if 'corex_model' not in globals():
+                    p1 = Path("save/corex_results.pkl")
+                    if p1.exists():
+                        with open(p1, "rb") as f:
+                            corex_model, doc_term_matrix, corex_policy_topic_means = pickle.load(f)
+                        st.success("Loaded CorEx results from save/corex_results.pkl")
                     else:
-                        # Chunk uploaded policy using same chunking approach as training
-                        chunk_size = 60
-                        upload_chunks = chunk_policy(uploaded_text or "", chunk_size)
-                        if len(upload_chunks) == 0:
-                            st.warning("Uploaded policy appears empty after tokenization; no topics to show.")
+                        corex_model = None
+                        st.info("No CorEx pickle found in save")
+
+                if corex_model is not None:
+                    # Prepare anchors / topic count to match fitted model
+                    anchors = topics_from_thematic_analysis
+                    n_topics = len(anchors) + 1
+
+                    # Chunk the uploaded policy the same way as the corpus
+                    chunk_size = 60
+                    chunks = chunk_policy(str(uploaded_text or ""), chunk_size)
+
+                    # Build a CountVectorizer that uses the same vocabulary (words) the CorEx model was fitted with
+                    try:
+                        vocab = getattr(corex_model, "words", None)
+                        if vocab is None:
+                            # fallback: try attribute name used by some corex versions
+                            vocab = getattr(corex_model, "vocab", None)
+                        if vocab is None:
+                            raise RuntimeError("Cannot find vocabulary on corex_model to vectorize uploaded text.")
+                        vec = CountVectorizer(vocabulary=vocab, lowercase=True, token_pattern=r"(?u)\b\w+\b")
+                        doc_term_matrix_new = vec.transform(chunks) if chunks else None
+
+                        # Transform chunks through CorEx to get topic activations per chunk
+                        if doc_term_matrix_new is None or doc_term_matrix_new.shape[0] == 0:
+                            topic_scores = np.zeros(n_topics)
                         else:
-                            # Build a CountVectorizer that uses the original vocabulary (keeps column order consistent)
-                            vec = _CV(vocabulary={w: i for i, w in enumerate(words_vocab)})
-                            dtm_upload = vec.transform(upload_chunks)
+                            chunk_topic_dist = corex_model.transform(doc_term_matrix_new)  # shape: (n_chunks, n_topics)
+                            # aggregate chunk-level topic activations to get a single vector for the uploaded policy
+                            topic_scores = np.asarray(chunk_topic_dist).mean(axis=0).flatten()
 
-                            # Transform with the existing CorEx model to get per-chunk topic activations
-                            chunk_topic_dist = corex_model.transform(dtm_upload)  # shape: (n_chunks, n_topics)
-                            # Aggregate to document-level by mean across chunks
-                            topic_scores = np.asarray(chunk_topic_dist).mean(axis=0)
+                        # Ensure topic_scores length matches number of topics (pad/truncate if necessary)
+                        if len(topic_scores) < n_topics:
+                            topic_scores = np.pad(topic_scores, (0, n_topics - len(topic_scores)))
+                        elif len(topic_scores) > n_topics:
+                            topic_scores = topic_scores[:n_topics]
 
-                            # Prepare labels using top words from the fitted model
-                            topics_top_words = corex_model.get_topics(n_words=5)
-                            labels = []
-                            for t in topics_top_words[: len(topic_scores)]:
-                                if t:
-                                    words = [w for w, *rest in t][:3]
-                                    labels.append(", ".join(words))
-                                else:
-                                    labels.append("")
 
-                            # If all zeros, show a single grey slice
-                            if topic_scores.sum() == 0 or np.allclose(topic_scores, 0):
-                                fig = go.Figure(data=[go.Pie(
-                                    labels=["No matching CorEx topics"],
-                                    values=[1],
-                                    marker=dict(colors=["lightgrey"])
-                                )])
-                            else:
-                                fig = go.Figure(data=[go.Pie(
-                                    labels=labels,
-                                    values=topic_scores,
-                                    textinfo="label+percent",
-                                    textposition="inside",
-                                    hovertemplate='<b>%{label}</b><br>Value: %{value:.3f}<br>Percent: %{percent}<extra></extra>'
-                                )])
-                            fig.update_layout(title="CorEx topics detected in uploaded policy", height=500)
+                        # Insert uploaded policy topic scores into df temporarily so corexResults_piechart can read them
+                        # Ensure the CorEx topic columns exist
+                        for i in range(n_topics):
+                            col = f'CorEx_topic_{i}'
+                            if col not in df.columns:
+                                df[col] = 0.0
 
-                            with st.expander("Topics found in uploaded policy", expanded=True):
-                                st.plotly_chart(fig, use_container_width=True)
+                        tmp_idx = "__uploaded_policy__"
+                        # create a temporary row with the uploaded policy's topic scores
+                        df.loc[tmp_idx] = { 'university': uni_choice }
+                        for i in range(n_topics):
+                            df.loc[tmp_idx, f'CorEx_topic_{i}'] = float(topic_scores[i])
 
-                            # Also show a small table of topic scores (percent)
-                            pct = (topic_scores / (topic_scores.sum() if topic_scores.sum() > 0 else 1)) * 100
-                            topic_df = pd.DataFrame({
-                                "topic_index": [f"Topic {i+1}" for i in range(len(topic_scores))],
-                                "top_words": labels,
-                                "score": topic_scores,
-                                "pct": np.round(pct, 2)
-                            }).sort_values("score", ascending=False).reset_index(drop=True)
-                            st.table(topic_df.head(10))
+                        # Use the existing helper to build the pie chart
+                        fig = corexResults_piechart(corex_model, tmp_idx, numTopicsPerGroup=9)
+
+                        # remove the temporary row to avoid mutating the main dataframe
+                        try:
+                            df.drop(index=tmp_idx, inplace=True)
+                        except Exception:
+                            pass
+                        # Build labels from the fitted CorEx model (top 3 words per topic)
+                        # labels = []
+                        # if 'corex_model' in globals() and corex_model is not None:
+                        #     topics_top3 = corex_model.get_topics(n_words=5)
+                        #     for i, t in enumerate(topics_top3[:n_topics]):
+                        #         if t:
+                        #             words = [w for w, *rest in t][:3]
+                        #             labels.append(', '.join(words))
+                        #         else:
+                        #             labels.append(f"Group{i+1}")
+                        # else:
+                        #     labels = [f"Group{i+1}" for i in range(n_topics)]
+
+                        # # Plot pie chart of topic distribution for the uploaded policy
+                        # if topic_scores.sum() == 0:
+                        #     fig = go.Figure(data=[go.Pie(
+                        #         labels=['No matching CorEx topics'],
+                        #         values=[1],
+                        #         marker=dict(colors=['lightgrey'])
+                        #     )])
+                        # else:
+                        #     fig = go.Figure(data=[go.Pie(
+                        #         labels=labels,
+                        #         values=topic_scores,
+                        #         textinfo='label+percent',
+                        #         textposition='inside',
+                        #         hovertemplate='<b>%{label}</b><br>Value: %{value:.3f}<br>Percent: %{percent}<extra></extra>'
+                        #     )])
+                        # fig.update_layout(
+                        #     title="Topics found in uploaded policy",
+                        #     showlegend=True,
+                        #     height=500
+                        #  )
+                        fig.update_layout(title="Topics found in uploaded policy")
+                        st.plotly_chart(fig, use_container_width=True)
+
+                    except Exception as e:
+                        st.error(f"Failed to score uploaded policy with CorEx model: {e}")
+                else:
+                    st.info("No CorEx model available to analyze uploaded policy.")
+ 
+
+                            # # Also show a small table of topic scores (percent)
+                            # pct = (topic_scores / (topic_scores.sum() if topic_scores.sum() > 0 else 1)) * 100
+                            # topic_df = pd.DataFrame({
+                            #     "topic_index": [f"Topic {i+1}" for i in range(len(topic_scores))],
+                            #     "top_words": labels,
+                            #     "score": topic_scores,
+                            #     "pct": np.round(pct, 2)
+                            # }).sort_values("score", ascending=False).reset_index(drop=True)
+                            # st.table(topic_df.head(10))
             except Exception as e:
                 st.error(f"Error analyzing uploaded policy topics: {e}")
 
