@@ -827,8 +827,8 @@ elif mode == "Analyse":
         n_topics = len(anchors)+1  # n_topics=14
         policies = df['policy_text']
         # corex_model, doc_term_matrix, corex_policy_topic_means= run_corex(policies, anchors=anchors)
-        if os.path.exists("corex_results.pkl"):
-            with open("corex_results.pkl", "rb") as f:
+        if os.path.exists("save/corex_results.pkl"):
+            with open("save/corex_results.pkl", "rb") as f:
                 corex_model, doc_term_matrix, corex_policy_topic_means = pickle.load(f)
                 print("Loaded corex results from pickle")
         else:   
