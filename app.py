@@ -356,7 +356,7 @@ def run_corex(policies, anchors):
         pickle.dump((corex_model, doc_term_matrix, corex_policy_topic_means), f)
     #option to download pickle file
     with st.sidebar.expander("Advanced Options", expanded=False):
-        st.download_button("Download Corex Results", "corex_results.pkl")
+        st.download_button("Download Corex Results", "save/corex_results.pkl", file_name=f"corex_results_{date_run}.pkl", mime="application/octet-stream")
     return corex_model, doc_term_matrix, corex_policy_topic_means
 
 def scatterPlot2col(
