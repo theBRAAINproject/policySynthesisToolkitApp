@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 import plotly.express as px
 import plotly.graph_objects as go
 import circlify
-
+pkl_path = "save/corex_results.pkl"
 
 # Optional libraries (graceful fallback)
 try:
@@ -355,7 +355,7 @@ def run_corex(policies, anchors):
     with open("corex_results.pkl", "wb") as f:
         pickle.dump((corex_model, doc_term_matrix, corex_policy_topic_means), f)
     #option to download pickle file
-    pkl_path = "save/corex_results.pkl"
+    
     with st.sidebar.expander("Advanced Options", expanded=False):
     # allow downloading the saved CoreX pickle
         
