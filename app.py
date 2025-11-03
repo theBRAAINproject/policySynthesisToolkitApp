@@ -57,6 +57,7 @@ except Exception:
 try:
     from sentence_transformers import SentenceTransformer
     import torch
+    from sklearn.feature_extraction.text import CountVectorizer as _CV
     HAS_SBERT = True
 except Exception:
     HAS_SBERT = False
@@ -1100,6 +1101,74 @@ elif mode == "Upload":
                            lambda t: textstat.flesch_reading_ease(t), 
                            "Reading Ease", "#F2FDED")
                 
+
+            # Analyze uploaded policy with existing CorEx model and show topic pie chart
+            try:
+                if 'corex_model' not in globals() or corex_model is None:
+                    st.info("No fitted CorEx model available to analyze topics for the uploaded policy.")
+                else:
+                    # Reconstruct vocabulary used by the fitted CorEx model
+                    words_vocab = getattr(corex_model, "words", None) or getattr(corex_model, "words_", None)
+                    if not words_vocab:
+                        st.warning("Couldn't recover CorEx vocabulary; unable to vectorize uploaded policy for topic inference.")
+                    else:
+                        # Chunk uploaded policy using same chunking approach as training
+                        chunk_size = 60
+                        upload_chunks = chunk_policy(uploaded_text or "", chunk_size)
+                        if len(upload_chunks) == 0:
+                            st.warning("Uploaded policy appears empty after tokenization; no topics to show.")
+                        else:
+                            # Build a CountVectorizer that uses the original vocabulary (keeps column order consistent)
+                            vec = _CV(vocabulary={w: i for i, w in enumerate(words_vocab)})
+                            dtm_upload = vec.transform(upload_chunks)
+
+                            # Transform with the existing CorEx model to get per-chunk topic activations
+                            chunk_topic_dist = corex_model.transform(dtm_upload)  # shape: (n_chunks, n_topics)
+                            # Aggregate to document-level by mean across chunks
+                            topic_scores = np.asarray(chunk_topic_dist).mean(axis=0)
+
+                            # Prepare labels using top words from the fitted model
+                            topics_top_words = corex_model.get_topics(n_words=5)
+                            labels = []
+                            for t in topics_top_words[: len(topic_scores)]:
+                                if t:
+                                    words = [w for w, *rest in t][:3]
+                                    labels.append(", ".join(words))
+                                else:
+                                    labels.append("")
+
+                            # If all zeros, show a single grey slice
+                            if topic_scores.sum() == 0 or np.allclose(topic_scores, 0):
+                                fig = go.Figure(data=[go.Pie(
+                                    labels=["No matching CorEx topics"],
+                                    values=[1],
+                                    marker=dict(colors=["lightgrey"])
+                                )])
+                            else:
+                                fig = go.Figure(data=[go.Pie(
+                                    labels=labels,
+                                    values=topic_scores,
+                                    textinfo="label+percent",
+                                    textposition="inside",
+                                    hovertemplate='<b>%{label}</b><br>Value: %{value:.3f}<br>Percent: %{percent}<extra></extra>'
+                                )])
+                            fig.update_layout(title="CorEx topics detected in uploaded policy", height=500)
+
+                            with st.expander("Topics found in uploaded policy", expanded=True):
+                                st.plotly_chart(fig, use_container_width=True)
+
+                            # Also show a small table of topic scores (percent)
+                            pct = (topic_scores / (topic_scores.sum() if topic_scores.sum() > 0 else 1)) * 100
+                            topic_df = pd.DataFrame({
+                                "topic_index": [f"Topic {i+1}" for i in range(len(topic_scores))],
+                                "top_words": labels,
+                                "score": topic_scores,
+                                "pct": np.round(pct, 2)
+                            }).sort_values("score", ascending=False).reset_index(drop=True)
+                            st.table(topic_df.head(10))
+            except Exception as e:
+                st.error(f"Error analyzing uploaded policy topics: {e}")
+
             with st.expander("Advance Options", expanded=False):
                 st.download_button("Download similarity table (CSV)", data=csv, file_name="similarity_results.csv", mime="text/csv")
 
