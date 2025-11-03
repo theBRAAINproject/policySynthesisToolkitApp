@@ -879,8 +879,13 @@ elif mode == "Analyse":
                 else:
                     label_words = [fw or '' for fw in first_words]
 
-            # Create labels for pie chart
-            labels = [f"Group{i+1}: {label_words[i]}" if label_words[i] else f"Group{i+1}" for i in range(len(corex_vals))]
+            # Create labels for pie chart with topic value and percentage
+            labels = []
+            for i in range(len(corex_vals)):
+                base_label = f"Group{i+1}: {label_words[i]}" if label_words[i] else f"Group{i+1}"
+                value = corex_vals[i]
+                percentage = (value / corex_vals.sum() * 100) if corex_vals.sum() > 0 else 0
+                labels.append(f"{base_label}<br>({value:.3f}, {percentage:.1f}%)")
             
             # Create pie chart with Plotly
             fig = go.Figure(data=[go.Pie(
