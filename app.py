@@ -357,19 +357,11 @@ def run_corex(policies, anchors):
     #option to download pickle file
     
     with st.sidebar.expander("Advanced Options", expanded=False):
-    # allow downloading the saved CoreX pickle
-        
-        if os.path.exists(pkl_path):
-            with open(pkl_path, "rb") as _f:
-                pkl_bytes = _f.read()
-            st.download_button(
-                label="Download CorEx results (corex_results.pkl)",
-                data=pkl_bytes,
-                file_name="corex_results.pkl",
-                mime="application/octet-stream"
-            )
-        else:
-            st.info("No corex_results.pkl file available to download.")
+        #dump (corex_model, doc_term_matrix, corex_policy_topic_means as pickle file corecx_results_DATE.pkl
+        pkl_path = f"save/corex_results_{date_run}.pkl"
+        with open(pkl_path, "wb") as f:
+            pickle.dump((corex_model, doc_term_matrix, corex_policy_topic_means), f)
+        st.download_button("Download CorEx results", data=open(pkl_path, "rb").read(), file_name=f"corex_results_{date_run}.pkl")
     return corex_model, doc_term_matrix, corex_policy_topic_means
 
 def scatterPlot2col(
@@ -774,7 +766,16 @@ if mode == "Explore":
     with st.expander("Advance Options", expanded=False):
         # st.download_button("Download similarity table (CSV)", data=csv, file_name="similarity_results.csv", mime="text/csv")
         st.download_button("Download metrics (CSV)", data=metrics_df.to_csv(index=False).encode('utf-8'), file_name="corpus_metrics.csv", mime="text/csv")
-        
+        # force recompute button for corex
+        if st.button("Recompute CorEx Topic Modeling"):
+            corex_model, doc_term_matrix, corex_policy_topic_means = run_corex(policies, anchors=anchors)
+            st.success("Recomputed CorEx Topic Modeling.")
+            date_run= date.today()
+            pkl_path = f"save/corex_results_{date_run}.pkl"
+            with open(pkl_path, "wb") as f:
+                pickle.dump((corex_model, doc_term_matrix, corex_policy_topic_means), f)
+            st.download_button("Download CorEx results", data=open(pkl_path, "rb").read(), file_name=f"corex_results_{date_run}.pkl")
+
 # #------------------------------------------------------------------------------------------------
 # # ANALYSE------------------------------------------------------------------------------------------
 elif mode == "Analyse":
