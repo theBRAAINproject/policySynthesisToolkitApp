@@ -856,41 +856,23 @@ elif mode == "Analyse":
             marker=dict(colors=['lightgrey'])
             )])
         else:
-            # try to get the first word for each CorEx topic from the fitted model
-            first_words = []
-            if 'corex_model' in globals():
-                topics = corex_model.get_topics(n_words=1)
-            # topics is a list where each element is a list/tuple of (word, score, ...)
-            for t in topics[:len(corex_vals)]:
-                first_words.append(t[0][0] if t and len(t) > 0 else '')
-            else:
-                first_words = [''] * len(corex_vals)
-
-            # build labels with the top 6 words for each CorEx topic (fallback to existing first_words)
-            # build labels with the top 3 words for each CorEx topic (fallback to existing first_words)
-            if 'corex_model' in globals():
-                topics_top3 = corex_model.get_topics(n_words=5)
-                label_words = []
-                for t in topics_top3[:len(corex_vals)]:
-                    if t:
-                        # each t is list of tuples like (word, score, ...)
-                        # take the first element of each tuple (the word) to avoid unused variables
-                        words = [item[0] for item in t][:3]  # take top 3 words
-                        label_words.append(', '.join(words))
-                    else:
-                        label_words.append('')
-            else:
-                label_words = [fw or '' for fw in first_words]
-
-            # Build legend labels including top 3 words (for the legend/key only)
+            # get first 3 words for each topic from the fitted model and display as pie chart
+            labels = []
             legend_labels = []
-            for i in range(len(corex_vals)):
-                lw = label_words[i] if i < len(label_words) else ''
-                legend = f"Group{i+1}: {lw}" if lw else f"Group{i+1}"
-                legend_labels.append(legend)
-
-            # Keep pie slice labels minimal so the top-3 words only appear in the key/legend
-            labels = [f"Group {i+1}" for i in range(len(corex_vals))]
+            if 'corex_model' in globals():          
+                topics_top3 = corex_model.get_topics(n_words=5)
+                for i, t in enumerate(topics_top3[:len(corex_vals)]):
+                    if t:
+                        words = [w for w, *rest in t][:3]  # take top 3 words
+                        label = ', '.join(words)
+                        labels.append(label)
+                        legend_labels.append(f"Group{i+1}: {label} ({corex_vals[i]/corex_vals.sum()*100:.1f}%)")
+                    else:
+                        labels.append(f"Group{i+1}")
+                        legend_labels.append(f"Group{i+1} ({corex_vals[i]/corex_vals.sum()*100:.1f}%)")
+            else:
+                labels = [f"Group{i+1}" for i in range(len(corex_vals))]
+                legend_labels = [f"Group{i+1} ({corex_vals[i]/corex_vals.sum()*100:.1f}%)" for i in range(len(corex_vals))]
 
             # Expose the verbose legend labels for use elsewhere (e.g. display the key below the chart)
             pie_legend_labels = legend_labels
