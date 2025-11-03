@@ -698,13 +698,14 @@ if mode == "Explore":
             target_enclosure=circlify.Circle(x=0, y=0, r=1)
         )
 
-        # Get first 3 words for each topic from the CorEx model
+        # Get first 6 words for each topic from the CorEx model
+        num_topics_to_show = 6#len(topic_sizes)
         if 'corex_model' in globals():
-            topics_top3 = corex_model.get_topics(n_words=3)
+            topics_top3 = corex_model.get_topics(n_words=num_topics_to_show)
             topic_labels = []
             for i, t in enumerate(topics_top3[:len(topic_sizes)]):
                 if t:
-                    words = [w for w, *rest in t][:6]  # take top 6 words
+                    words = [w for w, *rest in t][:num_topics_to_show]  # take top 6 words
                     topic_labels.append(f'\n'.join(words))
                     # topic_labels.append(f"Group {i+1}:\n" + '\n'.join(words))
                 else:
