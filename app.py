@@ -879,13 +879,18 @@ elif mode == "Analyse":
                 else:
                     label_words = [fw or '' for fw in first_words]
 
-            # Create labels for pie chart with topic value and percentage
-            labels = []
+            # Build legend labels including top 3 words (for the legend/key only)
+            legend_labels = []
             for i in range(len(corex_vals)):
-                base_label = f"Group{i+1}: {label_words[i]}" if label_words[i] else f"Group{i+1}"
-                value = corex_vals[i]
-                percentage = (value / corex_vals.sum() * 100) if corex_vals.sum() > 0 else 0
-                labels.append(f"{base_label}<br>({value:.3f}, {percentage:.1f}%)")
+                lw = label_words[i] if i < len(label_words) else ''
+                legend = f"Group{i+1}: {lw}" if lw else f"Group{i+1}"
+                legend_labels.append(legend)
+
+            # Keep pie slice labels minimal so the top-3 words only appear in the key/legend
+            labels = [f"Group {i+1}" for i in range(len(corex_vals))]
+
+            # Expose the verbose legend labels for use elsewhere (e.g. display the key below the chart)
+            pie_legend_labels = legend_labels
             
             # Create pie chart with Plotly
             fig = go.Figure(data=[go.Pie(
