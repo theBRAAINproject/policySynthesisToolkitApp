@@ -497,7 +497,7 @@ def scatterPlot2col(
             hovermode='closest'
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig)#, width='stretch')
 
     with colE:
         # Metric display
@@ -635,7 +635,7 @@ if mode == "Explore":
     # show logos on UK map
 
     # search box and min words filter visible in main pane
-    q = st.text_input("Search universities or policy text", value="")
+    q = st.text_input("Search universities or policy text (regex can be used)", value="")
     # min_words = st.slider("Min words", min_value=0, max_value=5000, value=0, step=50)
     min_words = 0
     if q:
@@ -663,53 +663,86 @@ if mode == "Explore":
         #     st.table(top_long[['university','words','chars','flesch_kincaid']].reset_index(drop=True))
 
             # Keyword aggregation
-        kw_cols = [c for c in metrics_df.columns if c.startswith('kw_')]
-        if kw_cols:
-            kw_sum = metrics_df[kw_cols].sum().sort_values(ascending=False)
-            with st.expander("Keywords", expanded=True):
-                col1, col2 = st.columns([1,1])
-                with col1:
-                    # st.subheader("Keyword mentions across universities (counts)")
-                    st.table(kw_sum.rename_axis('keyword').reset_index().rename(columns={0:'count'}))
-                with col2:
-                    #show top keywords as a plotly donut chart
-                    fig = px.pie(values=kw_sum.values, names=kw_sum.index, title='Top Keywords')
-                    st.plotly_chart(fig)
+        # kw_cols = [c for c in metrics_df.columns if c.startswith('kw_')]
+        # if kw_cols:
+        #     kw_sum = metrics_df[kw_cols].sum().sort_values(ascending=False)
+        #     with st.expander("Keywords", expanded=True):
+        #         # col1, col2 = st.columns([1,1])
+        #         # with col1:
+        #         #     # st.subheader("Keyword mentions across universities (counts)")
+        #         #     st.table(kw_sum.rename_axis('keyword').reset_index().rename(columns={0:'count'}))
+        #         # with col2:
+        #         #     #show top keywords as a plotly donut chart
+        #         #     fig = px.pie(values=kw_sum.values, names=kw_sum.index, title='Top Keywords')
+        #         #     st.plotly_chart(fig)
 
-                # #show all keywords as a plotly bar chart
-                # kw_sum_df = kw_sum.reset_index()
-                # kw_sum_df.columns = ['keyword', 'count']
-                # fig = px.bar(kw_sum_df, x='keyword', y='count', title='All Keywords')
-                # st.plotly_chart(fig)
 
-                #load keywords into multiselect for further analysis, if a user removes a keyword, update the bar chart
-                selected_keywords = st.multiselect(
-                    "Select keywords to analyze", 
-                    options=kw_sum.index.str.replace('kw_', '').tolist(), 
-                    default=kw_sum.index.str.replace('kw_', '').tolist()
+
+        #         #load keywords into multiselect for further analysis, if a user removes a keyword, update the bar chart
+        #         selected_keywords = st.multiselect(
+        #             "Select keywords to analyze", 
+        #             options=kw_sum.index.str.replace('kw_', '').tolist(), 
+        #             default=kw_sum.index.str.replace('kw_', '').tolist()
+        #         )
+        #         #st badge to show keywords selected
+        #         st.badge(f"Keywords selected: {len(selected_keywords)}", icon=":material/tag:", color="blue")
+
+        #         if selected_keywords:
+        #             # Filter the keyword data based on selection
+        #             selected_kw_cols = [f'kw_{kw}' for kw in selected_keywords]
+        #             filtered_kw_sum = metrics_df[selected_kw_cols].sum().sort_values(ascending=False)
+                    
+        #             # Update the bar chart with selected keywords
+        #             filtered_kw_df = filtered_kw_sum.reset_index()
+        #             filtered_kw_df.columns = ['keyword', 'count']
+        #             filtered_kw_df['keyword'] = filtered_kw_df['keyword'].str.replace('kw_', '')
+                    
+        #             fig_filtered = px.bar(filtered_kw_df, x='keyword', y='count')
+        #             # , 
+        #                                 #  title=f'Selected Keywords ({len(selected_keywords)} selected)')
+        #             st.plotly_chart(fig_filtered)
+        #         else:
+        #             st.info("Select keywords to display in the chart")
+
+       #------- Word Frequency Analysis
+        # Word frequency bar chart for the current corpus
+        texts = display_df['policy_text'].astype(str).tolist()
+        if not any(t.strip() for t in texts):
+            st.info("No text available to compute word frequencies.")
+        else:
+            with st.expander(f"Most Frequent Words in Selected Policies", expanded=True):
+                vec = CountVectorizer(stop_words='english', token_pattern=r"(?u)\b\w+\b", lowercase=True)
+                X = vec.fit_transform(texts)
+                freqs = np.asarray(X.sum(axis=0)).ravel()
+                terms = vec.get_feature_names_out()
+                words_df = pd.DataFrame({"word": terms, "count": freqs}).sort_values("count", ascending=False).reset_index(drop=True)
+
+                # allow selecting a range of word ranks to plot (default 0..50)
+                max_words = len(words_df)
+                max_words= 500
+                default_end = min(50, max_words)
+                start, end = st.slider(
+                    "Select word rank range to plot (start, end)",
+                    min_value=0,
+                    max_value=max_words,
+                    value=(0, default_end),
+                    step=1
                 )
-                #st badge to show keywords selected
-                st.badge(f"Keywords selected: {len(selected_keywords)}", icon=":material/tag:", color="blue")
+                # Ensure valid slicing
+                if end <= start:
+                    end = min(start + 1, max_words)
+                words_df = words_df.iloc[start:end].reset_index(drop=True)
+                top_n = len(words_df)
 
-                if selected_keywords:
-                    # Filter the keyword data based on selection
-                    selected_kw_cols = [f'kw_{kw}' for kw in selected_keywords]
-                    filtered_kw_sum = metrics_df[selected_kw_cols].sum().sort_values(ascending=False)
-                    
-                    # Update the bar chart with selected keywords
-                    filtered_kw_df = filtered_kw_sum.reset_index()
-                    filtered_kw_df.columns = ['keyword', 'count']
-                    filtered_kw_df['keyword'] = filtered_kw_df['keyword'].str.replace('kw_', '')
-                    
-                    fig_filtered = px.bar(filtered_kw_df, x='keyword', y='count')
-                    # , 
-                                        #  title=f'Selected Keywords ({len(selected_keywords)} selected)')
-                    st.plotly_chart(fig_filtered)
-                else:
-                    st.info("Select keywords to display in the chart")
-       
+            # with st.expander(f"Top {top_n} most frequent words", expanded=True):
+                fig = px.bar(words_df.head(top_n), x="word", y="count", title=f"Word Frequencies", labels={"count":"Frequency","word":"Word"})
+                fig.update_layout(xaxis_tickangle=-45, height=420)
+                st.plotly_chart(fig)
+                st.dataframe(words_df.head(200), width='stretch')
 
-
+            # allow download of the full frequency table
+            # csv_bytes = words_df.to_csv(index=False).encode("utf-8")
+            # st.download_button("Download word frequencies (CSV)", data=csv_bytes, file_name="word_frequencies.csv", mime="text/csv")
 
         # with st.expander("Keyword Analysis", expanded=True):
 
@@ -724,10 +757,13 @@ if mode == "Explore":
     # generate_word_cloud(display_df['policy_text'])
     
         # Generate and display word cloud
-    with st.expander(f"Word Cloud for all Policies", expanded=True):
-        wordcloud = generate_word_cloud(display_df['policy_text'],"Combined Policies")
-
-
+    with st.expander(f"Word Cloud for Selected Policies", expanded=True):
+        try:
+            wordcloud = generate_word_cloud(display_df['policy_text'],"Combined Policies")
+            st.image(wordcloud, width='stretch')
+        except Exception as e:
+            pass
+            # st.error(f"Error generating word cloud: {e}")
 
             # st.subheader("CorEx Topic Modeling:")
     
@@ -745,9 +781,9 @@ if mode == "Explore":
     for i in range(n_topics):
         df[f'CorEx_topic_{i}'] = corex_policy_topic_means[f'CorEx_topic_{i}'].values
 
+    st.divider()
 
-
-    with st.expander("Common Topics Found", expanded=True):
+    with st.expander("Common Topics Found for ALL policies", expanded=True):
         # show topics as a bubble chart, with each bubble represeting the size of topic in the corpora 
         topic_sizes = df[[f'CorEx_topic_{i}' for i in range(n_topics)]].sum()
         # fig = px.scatter(x=topic_sizes.index, y=topic_sizes.values, size=topic_sizes.values, title="CorEx Topic Sizes")
@@ -962,7 +998,7 @@ elif mode == "Analyse":
         # )
         
         with st.expander(f"Topics found in {uni_choice}'s policy", expanded=True):
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig)#, width='stretch')
 
 
         # # Pie chart of CorEx topic distribution for this policy (include first 3 words of each topic)
@@ -1272,7 +1308,7 @@ elif mode == "Upload":
                         #     height=500
                         #  )
                         fig.update_layout(title="Topics found in uploaded policy")
-                        st.plotly_chart(fig, use_container_width=True)
+                        st.plotly_chart(fig)#, width='stretch')
 
                     except Exception as e:
                         st.error(f"Failed to score uploaded policy with CorEx model: {e}")
