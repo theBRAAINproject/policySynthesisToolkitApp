@@ -262,8 +262,6 @@ def compute_corpus_metrics(df: pd.DataFrame) -> pd.DataFrame:
         rows.append(row)
     return pd.DataFrame(rows)
 
-
-
 def generate_word_cloud(texts: pd.Series, name):
     combined_text = " ".join(texts.astype(str).tolist())
     # extend stopwords with some common artifacts from scraped policies
@@ -287,7 +285,6 @@ def generate_word_cloud(texts: pd.Series, name):
     # buf = io.BytesIO()
     # wc.to_image().save(buf, format='PNG')
     # st.download_button("download", buf.getvalue(), "wordcloud.png")
-
 
 anchors_old = [
         ["ethics", "ethical", "fair"],               # Topic 1: Ethics
@@ -352,20 +349,17 @@ def run_corex(policies, anchors):
     corex_policy_topic_means = corex_chunk_df.groupby('policy_idx').mean()
     date_run= date.today()
     #save corex results to pickle
-    with open("corex_results.pkl", "wb") as f:
-        pickle.dump((corex_model, doc_term_matrix, corex_policy_topic_means), f)
+    # with open("corex_results.pkl", "wb") as f:
+    #     pickle.dump((corex_model, doc_term_matrix, corex_policy_topic_means), f)
     #option to download pickle file
     
-    with st.sidebar.expander("Advanced Options", expanded=False):
-        #dump (corex_model, doc_term_matrix, corex_policy_topic_means as pickle file corecx_results_DATE.pkl
-        pkl_path = f"save/corex_results_{date_run}.pkl"
-        with open(pkl_path, "wb") as f:
-            pickle.dump((corex_model, doc_term_matrix, corex_policy_topic_means), f)
-        st.download_button("Download CorEx results", data=open(pkl_path, "rb").read(), file_name=f"corex_results_{date_run}.pkl")
+    # with st.sidebar.expander("Advanced Options", expanded=False):
+    #     #dump (corex_model, doc_term_matrix, corex_policy_topic_means as pickle file corecx_results_DATE.pkl
+    #     pkl_path = f"save/corex_results_{date_run}.pkl"
+    #     with open(pkl_path, "wb") as f:
+    #         pickle.dump((corex_model, doc_term_matrix, corex_policy_topic_means), f)
+    #     st.download_button("Download CorEx results", data=open(pkl_path, "rb").read(), file_name=f"corex_results_{date_run}.pkl")
     return corex_model, doc_term_matrix, corex_policy_topic_means
-
-
-
 
 def corexResults_piechart(corex_model, idx, numTopicsPerGroup=3):
 # n_topics=len(anchors)+1
@@ -422,9 +416,6 @@ def corexResults_piechart(corex_model, idx, numTopicsPerGroup=3):
         height=600
     )
     return fig
-
-
-
 
 def scatterPlot2col(
     df, 
@@ -616,13 +607,21 @@ else:
 
 # Replace previous two-column UI with a mode-based layout
 # Add a sidebar mode selector: Explore, Upload, About
-mode = st.sidebar.radio("Mode", options=["About", "Explore", "Analyse", "Upload"], index=0)
+st.sidebar.divider()
+mode = st.sidebar.radio("Select an option:", options=["About", "Explore", "Analyse", "Upload", "Contact Us"], index=0)
 
 
 #------------------------------------------------------------------------------------------------
 # EXPLORE------------------------------------------------------------------------------------------
-if mode == "Explore":
-    st.header("Exploring UK HEI policies for Generative AI use")
+if mode == "Contact Us":
+    st.header("Contact Us")
+    st.markdown("""
+    For suggestions, feedback, or complaints regarding the HEI Gen AI Policy Toolkit, please reach out to us through the following channels:
+    - **Email**: to add.    
+    - **Project Website**: to add
+    """)
+elif mode == "Explore":
+    # st.header("Exploring UK HEI policies for Generative AI use")
     # prepare display_df for listing/searching (same logic as before)
     display_df = df.copy()
     if 'policy_text' in display_df.columns:
@@ -631,11 +630,14 @@ if mode == "Explore":
 
     #ideas: 
     # show list of universities as containers with name of university and explore button
-    # show logos with university names
+    # [done] show logos with university names
     # show logos on UK map
 
     # search box and min words filter visible in main pane
     q = st.text_input("Search universities or policy text (regex can be used)", value="")
+
+
+
     # min_words = st.slider("Min words", min_value=0, max_value=5000, value=0, step=50)
     min_words = 0
     if q:
@@ -646,6 +648,20 @@ if mode == "Explore":
         display_df = display_df[mask]
     display_df = display_df[display_df.get('words', 0) >= min_words]
     
+    #remove URLs from text in display_df
+    display_df['policy_text'] = display_df['policy_text'].apply(lambda t: re.sub(r'http\S+|www\.\S+', '', str(t)))
+
+    #remove individual numbers from text in display_df
+    display_df['policy_text'] = display_df['policy_text'].apply(lambda t: re.sub(r'\b\d+\b', '', str(t)))
+
+    #remove single letter words from text in display_df
+    display_df['policy_text'] = display_df['policy_text'].apply(lambda t: re.sub(r'\b[a-zA-Z]\b', '', str(t)))
+
+    #remove any words with numbers in them from text in display_df
+    display_df['policy_text'] = display_df['policy_text'].apply(lambda t: re.sub(r'\b\w*\d\w*\b', '', str(t)))
+
+    #remove word = "st" from text in display_df
+    display_df['policy_text'] = display_df['policy_text'].apply(lambda t: re.sub(r'\b(st)\b', '', str(t)))
 
     if len(metrics_df) == 0:
         st.info("No corpus metrics available. Add a dataset file to /mnt/data or upload one policy to compare.")
@@ -766,7 +782,7 @@ if mode == "Explore":
             # st.error(f"Error generating word cloud: {e}")
 
             # st.subheader("CorEx Topic Modeling:")
-    
+    st.divider()
     
     anchors = topics_from_thematic_analysis
     n_topics = len(anchors)+1 # n_topics=14
@@ -781,9 +797,9 @@ if mode == "Explore":
     for i in range(n_topics):
         df[f'CorEx_topic_{i}'] = corex_policy_topic_means[f'CorEx_topic_{i}'].values
 
-    st.divider()
 
-    with st.expander("Common Topics Found for ALL policies", expanded=True):
+
+    with st.expander("Common Topics in ALL policies", expanded=True):
         # show topics as a bubble chart, with each bubble represeting the size of topic in the corpora 
         topic_sizes = df[[f'CorEx_topic_{i}' for i in range(n_topics)]].sum()
         # fig = px.scatter(x=topic_sizes.index, y=topic_sizes.values, size=topic_sizes.values, title="CorEx Topic Sizes")
@@ -853,24 +869,126 @@ if mode == "Explore":
     # with st.expander("Topics found", expanded=False):
     #     fig= corexResults_piechart(corex_model, numTopicsPerGroup=3)
     #     st.plotly_chart(fig)
-    with st.expander(":blue-background[Full List of Topics Found]", expanded=False):
-            # Print top words for each topic
-        for i, topic in enumerate(corex_model.get_topics(n_words=10)):
-            st.text(f"Group {i+1}: {[w for w, _, _ in topic]}")
-        # st.text(df[[f'CorEx_topic_{i}' for i in range(n_topics)]].head())
 
+
+    selected_policies = display_df['policy_text']
+    if len(selected_policies) != len(policies) and len(selected_policies) > 0:  
+        with st.expander("Common Topics in SELECTED policies", expanded=True):  
+            st.badge(f"Policies selected: {len(display_df)}", icon=":material/check:", color="green")
+            st.info("Note: as you have selected a subset of policies, click the button below to analyze topics for the selected policies only.")
+            if st.button("Analyze topics for selected policies"):
+                # if selected policies are not zero, rerun corex on selected policies
+                selected_policies = display_df['policy_text']
+                if len(selected_policies) == 0:
+                    st.info("No policies selected to analyze.")
+                else:   
+                    corex_model_sel, doc_term_matrix_sel, corex_policy_topic_means_sel = run_corex(selected_policies, anchors=anchors)
+                    print("Generated new corex results for selected policies -> in main")
+                    for i in range(n_topics):
+                        display_df[f'CorEx_topic_{i}'] = corex_policy_topic_means_sel[f'CorEx_topic_{i}'].values
+                    
+                    # show topics as a bubble chart, with each bubble represeting the size of topic in the corpora 
+                    topic_sizes_sel = display_df[[f'CorEx_topic_{i}' for i in range(n_topics)]].sum()
+                    # fig = px.scatter(x=topic_sizes.index, y=topic_sizes.values, size=topic_sizes.values, title="CorEx Topic Sizes")
+                    # st.plotly_chart(fig)
+
+                    #show topics as circles using  circlify
+
+                    circles = circlify.circlify(
+                        topic_sizes_sel.values.tolist(), 
+                        show_enclosure=False, 
+                        target_enclosure=circlify.Circle(x=0, y=0, r=1)
+                    )
+
+                    # Get first 6 words for each topic from the CorEx model
+                    num_topics_to_show = 6#len(topic_sizes)
+                    if 'corex_model_sel' in globals():
+                        topics_top3 = corex_model_sel.get_topics(n_words=num_topics_to_show)
+                        topic_labels = []
+                        for i, t in enumerate(topics_top3[:len(topic_sizes)]):
+                            if t:
+                                words = [w for w, *rest in t][:num_topics_to_show]  # take top 6 words
+                                topic_labels.append(f'\n'.join(words))
+                                # topic_labels.append(f"Group {i+1}:\n" + '\n'.join(words))
+                            else:
+                                topic_labels.append(f" ")
+                                # topic_labels.append(f"Group {i+1}")
+                    else:
+                        topic_labels = [f"Group {i+1}" for i in range(len(topic_sizes))]
+                        # topic_labels = [f"Group {i+1}" for i in range(len(topic_sizes))]
+                    
+                    fig, ax = plt.subplots()
+                    # fig, ax = plt.subplots(figsize=(6,2))
+                    # Adjust figure size for landscape mode
+                    fig.set_size_inches(10, 6)
+                    ax.axis('off')
+                    
+                    # import matplotlib.colors as mcolors
+                    
+                    # Generate random light colors
+                    light_colors = ['lightblue', 'lightgreen', 'lightcoral', 'lightyellow', 
+                                'lightpink', 'lightgray', 'lightcyan', 'lavender',
+                                'mistyrose', 'honeydew', 'aliceblue', 'seashell',
+                                'linen', 'oldlace', 'floralwhite', 'mintcream']
+                    
+                    # Manually draw circles using matplotlib
+                    for i, circle in enumerate(circles):
+                        color = light_colors[i % len(light_colors)]
+                        patch = plt.Circle((circle.x, circle.y), circle.r, alpha=0.6, 
+                                facecolor=color, edgecolor='black', linewidth=0.5)
+                        ax.add_patch(patch)
+                    
+                    # Add text labels inside each circle with word wrapping to fit
+                    for circle, label in zip(circles, topic_labels):
+                        # Calculate font size based on circle radius to ensure text fits
+                        # font_size = min(8, max(4, circle.r * 10))
+                        font_size = min(12, max(6, circle.r * 20))
+                        ax.text(circle.x, circle.y, label, ha='center', va='center', 
+                        fontsize=font_size, wrap=True)
+                    
+                    # Set equal aspect ratio and limits
+                    ax.set_xlim(-1.1, 1.1)
+                    ax.set_ylim(-1.1, 1.1)
+                    ax.set_aspect('equal')
+
+                    st.pyplot(fig)
+      
+
+    # with st.expander(":blue-background[Full List of Topics Found]", expanded=False):
+    #         # Print top words for each topic
+    #     for i, topic in enumerate(corex_model.get_topics(n_words=10)):
+    #         st.text(f"Group {i+1}: {[w for w, _, _ in topic]}")
+    #     # st.text(df[[f'CorEx_topic_{i}' for i in range(n_topics)]].head())
     with st.expander("Advance Options", expanded=False):
         # st.download_button("Download similarity table (CSV)", data=csv, file_name="similarity_results.csv", mime="text/csv")
         st.download_button("Download metrics (CSV)", data=metrics_df.to_csv(index=False).encode('utf-8'), file_name="corpus_metrics.csv", mime="text/csv")
         # force recompute button for corex
-        if st.button("Recompute CorEx Topic Modeling"):
+
+        #dump (corex_model, doc_term_matrix, corex_policy_topic_means as pickle file corecx_results_DATE.pkl
+        date_run= date.today()
+        pkl_path = f"save/corex_results_{date_run}.pkl"
+        with open(pkl_path, "wb") as f:
+            pickle.dump((corex_model, doc_term_matrix, corex_policy_topic_means), f)
+        st.download_button("Download CorEx results (all policies)", data=open(pkl_path, "rb").read(), file_name=f"corex_results_{date_run}.pkl")
+
+        if len(selected_policies) != len(policies) and len(selected_policies) > 0 and 'corex_model_sel' in globals():  
+            #dump (corex_model_sel, doc_term_matrix_sel, corex_policy_topic_means_sel as pickle file corecx_results_SELECTED_DATE.pkl
+            date_run= date.today()
+            pkl_path_sel = f"save/corex_results_SELECTED_{date_run}.pkl"
+            with open(pkl_path_sel, "wb") as f:
+                pickle.dump((corex_model_sel, doc_term_matrix_sel, corex_policy_topic_means_sel), f)
+            st.download_button("Download CorEx results (selected policies)", data=open(pkl_path_sel, "rb").read(), file_name=f"corex_results_SELECTED_{date_run}.pkl")
+        
+             
+        if st.button("Force Recompute CorEx Topic Modeling for ALL policies"):
             corex_model, doc_term_matrix, corex_policy_topic_means = run_corex(policies, anchors=anchors)
+            
             st.success("Recomputed CorEx Topic Modeling.")
             date_run= date.today()
             pkl_path = f"save/corex_results_{date_run}.pkl"
             with open(pkl_path, "wb") as f:
                 pickle.dump((corex_model, doc_term_matrix, corex_policy_topic_means), f)
-            st.download_button("Download CorEx results", data=open(pkl_path, "rb").read(), file_name=f"corex_results_{date_run}.pkl")
+            st.download_button("Download Recomputed CorEx results", data=open(pkl_path, "rb").read(), file_name=f"corex_results_{date_run}.pkl")
 
 # #------------------------------------------------------------------------------------------------
 # # ANALYSE------------------------------------------------------------------------------------------
