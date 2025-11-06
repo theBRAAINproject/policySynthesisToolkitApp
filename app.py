@@ -963,7 +963,11 @@ elif mode == "Explore":
         # st.download_button("Download similarity table (CSV)", data=csv, file_name="similarity_results.csv", mime="text/csv")
         st.download_button("Download metrics (CSV)", data=metrics_df.to_csv(index=False).encode('utf-8'), file_name="corpus_metrics.csv", mime="text/csv")
         # force recompute button for corex
-
+            #         # Print top words for each topic
+        st.text("CorEx Topics:")
+        for i, topic in enumerate(corex_model.get_topics(n_words=10)):
+            st.text(f"Group {i+1}: {[w for w, _, _ in topic]}")
+        # st.text(df[[f'CorEx_topic_{i}' for i in range(n_topics)]].head())
         #dump (corex_model, doc_term_matrix, corex_policy_topic_means as pickle file corecx_results_DATE.pkl
         date_run= date.today()
         pkl_path = f"save/corex_results_{date_run}.pkl"
