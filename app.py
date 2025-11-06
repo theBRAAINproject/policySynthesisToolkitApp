@@ -786,7 +786,7 @@ elif mode == "Explore":
     
     anchors = topics_from_thematic_analysis
     n_topics = len(anchors)+1 # n_topics=14
-    policies = df['policy_text']
+    policies = display_df['policy_text']
     if os.path.exists("save/corex_results.pkl"):
         with open("save/corex_results.pkl", "rb") as f:
             corex_model, doc_term_matrix, corex_policy_topic_means = pickle.load(f)
