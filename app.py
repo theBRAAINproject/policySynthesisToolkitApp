@@ -29,11 +29,7 @@ from ollama import Client
 from ollama import generate
 
 
-client = Client(
-    host="https://ollama.com",
-    headers={'Authorization': 'Bearer ' + st.secrets["OLLAMA_API_KEY"]}
-    # headers={'Authorization': 'Bearer ' + os.environ.get('OLLAMA_API_KEY')}
-)
+
 
 
 
@@ -1472,8 +1468,10 @@ elif mode == "Upload":
 elif mode == "Enforceablity":
     st.header("Checking Enforceablity")
     model = 'gpt-oss:120b'
-
-
+    client = Client(
+        host="https://ollama.com",
+        headers={'Authorization': 'Bearer ' + st.secrets["OLLAMA_API_KEY"]}
+    )
 
     propertyToCheck="is enforceable"
     roleSetting="You are a university's compliance officer and you are tasked with determining if the following university policy for the use of Generative AI "
@@ -1489,23 +1487,7 @@ elif mode == "Enforceablity":
 
     SYSTEM_MESSAGE = f"""{roleSetting}{propertyToCheck}. {replyFormat}{rubricText}. The policy text is as follows: """
 
-    # Display rubric using columns with markdown colors
-    with st.expander("📋 Enforceability Rubric (click to expand)", expanded=False):
-        rubric_items = [
-            (":green[**🟢 5 – Fully Enforceable:**]", "Specific, non-ambiguous rules with clear responsibility, detection methods, and formal procedures linked to institutional processes."),
-            (":blue[**🔵 4 – Mostly Enforceable:**]", "Clear 'should/must' rules mappable to existing processes, but monitoring methods and thresholds are only partly specified."),
-            (":yellow[**🟡 3 – Partially Enforceable:**]", "Mix of clear expectations and advisory language; little detail on identification or handling; enforcement would be discretionary."),
-            (":orange[**🟠 2 – Weakly Enforceable:**]", "Largely aspirational or educational focus on awareness-raising with minimal reference to consequences or institutional mechanisms."),
-            (":red[**🔴 1 – Not Enforceable:**]", "Purely normative or descriptive without prohibitions, requirements, or links to procedures, sanctions, or approval routes."),
-            (":gray[**⚪ 0 – Not Applicable:**]", "Purely informational, conceptual, or unrelated to Gen AI use; no enforceable obligations or prohibitions.")
-        ]
-        
-        for rating, description in rubric_items:
-            col1, col2 = st.columns([1, 4])
-            with col1:
-                st.markdown(rating)
-            with col2:
-                st.markdown(description)
+
 
     # User input for policy text
     policy_text = st.text_area(
@@ -1522,15 +1504,74 @@ elif mode == "Enforceablity":
         
         # Placeholder for analysis button
         if st.button("Check Enforceability", type="primary"):
-            # st.info("Analysis feature coming soon. The policy will be evaluated using the enforceability rubric above.")
-            # Future: send full_prompt to LLM (ollama, etc.)
-            response = client.chat(
-                model=model,
-            messages=[{'role': 'user', 'content': full_prompt}],
-            stream=False,
-            )
-
-            # print('Thinking:\n', response.message.thinking)
-            st.write('Answer:\n', response.message.content)
+            with st.spinner("Analyzing policy enforceability..."):
+                response = client.chat(
+                    model=model,
+                    messages=[{'role': 'user', 'content': full_prompt}],
+                    stream=False,
+                )
+            
+            # Extract and parse the response
+            response_text = response.message.content.strip()
+            
+            # Parse ANSWER:<score> format
+            if "ANSWER:" in response_text:
+                parts = response_text.split("ANSWER:")
+                explanation_part = parts[1].strip()
+                
+                # Extract score (first character after ANSWER:)
+                score_char = explanation_part[0] if explanation_part else "?"
+                # Extract explanation (rest of the text)
+                explanation = explanation_part[1:].strip().lstrip(",").strip() if len(explanation_part) > 1 else ""
+                
+                # Map score to color and emoji
+                score_colors = {
+                    "5": (":green", "🟢 5 – Fully Enforceable"),
+                    "4": (":blue", "🔵 4 – Mostly Enforceable"),
+                    "3": (":yellow", "🟡 3 – Partially Enforceable"),
+                    "2": (":orange", "🟠 2 – Weakly Enforceable"),
+                    "1": (":red", "🔴 1 – Not Enforceable"),
+                    "0": (":gray", "⚪ 0 – Not Applicable"),
+                }
+                
+                color, label = score_colors.get(score_char, (":gray", "❓ Unknown"))
+                
+                # Display results
+                st.divider()
+                st.markdown("### Analysis Result")
+                
+                col1, col2 = st.columns([1, 3])
+                with col1:
+                    st.markdown(f"{color}[**{label}**]")
+                with col2:
+                    if explanation:
+                        st.markdown(f"_{explanation}_")
+                    else:
+                        st.info("No explanation provided.")
+                
+                st.divider()
+            else:
+                # Fallback if response doesn't contain ANSWER: format
+                st.write("**Raw Response:**")
+                st.write(response_text)
+            
     else:
         st.warning("Please enter or paste a policy text to analyze.")
+
+        # Display rubric using columns with markdown colors
+    with st.expander("See Enforceability Rubric (click to expand)", expanded=False):
+        rubric_items = [
+            (":green[**🟢 5 – Fully Enforceable:**]", "Specific, non-ambiguous rules with clear responsibility, detection methods, and formal procedures linked to institutional processes."),
+            (":blue[**🔵 4 – Mostly Enforceable:**]", "Clear 'should/must' rules mappable to existing processes, but monitoring methods and thresholds are only partly specified."),
+            (":yellow[**🟡 3 – Partially Enforceable:**]", "Mix of clear expectations and advisory language; little detail on identification or handling; enforcement would be discretionary."),
+            (":orange[**🟠 2 – Weakly Enforceable:**]", "Largely aspirational or educational focus on awareness-raising with minimal reference to consequences or institutional mechanisms."),
+            (":red[**🔴 1 – Not Enforceable:**]", "Purely normative or descriptive without prohibitions, requirements, or links to procedures, sanctions, or approval routes."),
+            (":gray[**⚪ 0 – Not Applicable:**]", "Purely informational, conceptual, or unrelated to Gen AI use; no enforceable obligations or prohibitions.")
+        ]
+        
+        for rating, description in rubric_items:
+            col1, col2 = st.columns([1, 4])
+            with col1:
+                st.markdown(rating)
+            with col2:
+                st.markdown(description)
