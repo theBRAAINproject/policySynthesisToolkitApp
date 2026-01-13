@@ -24,7 +24,16 @@ import plotly.express as px
 import plotly.graph_objects as go
 import circlify
 pkl_path = "save/corex_results.pkl"
-import ollama 
+from ollama import chat
+from ollama import Client
+from ollama import generate
+
+
+client = Client(
+    host="https://ollama.com",
+    headers={'Authorization': 'Bearer ' + st.secrets["OLLAMA_API_KEY"]}
+    # headers={'Authorization': 'Bearer ' + os.environ.get('OLLAMA_API_KEY')}
+)
 
 
 
@@ -1461,8 +1470,11 @@ elif mode == "Upload":
 #-------------------------------------------------------------------------------------------------
 # ENFORCE------------------------------------------------------------------------------------------
 elif mode == "Enforceablity":
-    st.header("Check Enforceablity")
-    
+    st.header("Checking Enforceablity")
+    model = 'gpt-oss:120b'
+
+
+
     propertyToCheck="is enforceable"
     roleSetting="You are a university's compliance officer and you are tasked with determining if the following university policy for the use of Generative AI "
     replyFormat = f" Grade the policy, providing a score from 0 to 5, where 5 is max positive value, in the following format ANSWER:<yourScore>, followed by a concise explanation in 1-2 sentences."
@@ -1477,32 +1489,25 @@ elif mode == "Enforceablity":
 
     SYSTEM_MESSAGE = f"""{roleSetting}{propertyToCheck}. {replyFormat}{rubricText}. The policy text is as follows: """
 
-    # Display rubric as a table with emoji indicators
+    # Display rubric using columns with markdown colors
     with st.expander("📋 Enforceability Rubric (click to expand)", expanded=False):
-        rubric_data = pd.DataFrame(
-            {
-                "Description": [
-                    "Specific, non-ambiguous rules with clear responsibility, detection methods, and formal procedures linked to institutional processes.",
-                    "Clear 'should/must' rules mappable to existing processes, but monitoring methods and thresholds are only partly specified.",
-                    "Mix of clear expectations and advisory language; little detail on identification or handling; enforcement would be discretionary.",
-                    "Largely aspirational or educational focus on awareness-raising with minimal reference to consequences or institutional mechanisms.",
-                    "Purely normative or descriptive without prohibitions, requirements, or links to procedures, sanctions, or approval routes.",
-                    "Purely informational, conceptual, or unrelated to Gen AI use; no enforceable obligations or prohibitions."
-                ]
-            },
-            index=[
-                "🟢 5 – Fully Enforceable",
-                "🔵 4 – Mostly Enforceable",
-                "🟡 3 – Partially Enforceable",
-                "🟠 2 – Weakly Enforceable",
-                "🔴 1 – Not Enforceable",
-                "⚪ 0 – Not Applicable"
-            ]
-        )
-        st.table(rubric_data, border="horizontal")
+        rubric_items = [
+            (":green[**🟢 5 – Fully Enforceable:**]", "Specific, non-ambiguous rules with clear responsibility, detection methods, and formal procedures linked to institutional processes."),
+            (":blue[**🔵 4 – Mostly Enforceable:**]", "Clear 'should/must' rules mappable to existing processes, but monitoring methods and thresholds are only partly specified."),
+            (":yellow[**🟡 3 – Partially Enforceable:**]", "Mix of clear expectations and advisory language; little detail on identification or handling; enforcement would be discretionary."),
+            (":orange[**🟠 2 – Weakly Enforceable:**]", "Largely aspirational or educational focus on awareness-raising with minimal reference to consequences or institutional mechanisms."),
+            (":red[**🔴 1 – Not Enforceable:**]", "Purely normative or descriptive without prohibitions, requirements, or links to procedures, sanctions, or approval routes."),
+            (":gray[**⚪ 0 – Not Applicable:**]", "Purely informational, conceptual, or unrelated to Gen AI use; no enforceable obligations or prohibitions.")
+        ]
+        
+        for rating, description in rubric_items:
+            col1, col2 = st.columns([1, 4])
+            with col1:
+                st.markdown(rating)
+            with col2:
+                st.markdown(description)
 
     # User input for policy text
-    st.subheader("Paste Your Policy Text")
     policy_text = st.text_area(
         "Enter or paste your policy text here to check enforceability:",
         height=300,
@@ -1517,7 +1522,15 @@ elif mode == "Enforceablity":
         
         # Placeholder for analysis button
         if st.button("Check Enforceability", type="primary"):
-            st.info("Analysis feature coming soon. The policy will be evaluated using the enforceability rubric above.")
+            # st.info("Analysis feature coming soon. The policy will be evaluated using the enforceability rubric above.")
             # Future: send full_prompt to LLM (ollama, etc.)
+            response = client.chat(
+                model=model,
+            messages=[{'role': 'user', 'content': full_prompt}],
+            stream=False,
+            )
+
+            # print('Thinking:\n', response.message.thinking)
+            st.write('Answer:\n', response.message.content)
     else:
         st.warning("Please enter or paste a policy text to analyze.")
