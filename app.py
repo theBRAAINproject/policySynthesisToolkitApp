@@ -24,8 +24,12 @@ import plotly.express as px
 import plotly.graph_objects as go
 import circlify
 pkl_path = "save/corex_results.pkl"
+import ollama 
 
-# Optional libraries (graceful fallback)
+
+
+
+
 try:
     from sklearn.feature_extraction.text import TfidfVectorizer
     from sklearn.metrics.pairwise import cosine_similarity
@@ -335,7 +339,7 @@ def run_corex(policies, anchors):
     # corex_model.fit(doc_term_matrix, words=words)
 
     # Get topic distribution for each chunk
-    corex_topic_dist = corex_model.transform(doc_term_matrix)
+    corex_topic_dist = corex_model.transform(doc_term_matrix, words=words)
 
     # Aggregate chunk-level topic assignments to policy-level by mean
     chunks_per_policy = [len(chunk_policy(policy, chunk_size)) for policy in policies]
@@ -608,7 +612,7 @@ else:
 # Replace previous two-column UI with a mode-based layout
 # Add a sidebar mode selector: Explore, Upload, About
 st.sidebar.divider()
-mode = st.sidebar.radio("Select an option:", options=["About", "Explore", "Analyse", "Upload", "Contact Us"], index=0)
+mode = st.sidebar.radio("Select an option:", options=["About", "Explore", "Analyse", "Upload", "Enforceablity", "Contact Us"], index=0)
 
 
 #------------------------------------------------------------------------------------------------
@@ -1165,6 +1169,8 @@ elif mode == "Analyse":
         #     st.pyplot(plt)
         # plt.close()
 
+
+
 #-------------------------------------------------------------------------------------------------
 # UPLOAD------------------------------------------------------------------------------------------
 elif mode == "Upload":
@@ -1173,7 +1179,6 @@ elif mode == "Upload":
     uploaded = st.file_uploader("Upload your policy (txt / pdf / docx)", type=['txt','pdf','docx'])
     uploaded_name, uploaded_text = read_uploaded_file(uploaded) if uploaded else ("", "")
 
-    # The uploader is available in the sidebar by default; show upload preview and comparisons here
     if uploaded:
         st.success(f"Uploaded: {uploaded_name}")
         with st.expander("Uploaded policy text", expanded=True):
@@ -1424,11 +1429,6 @@ elif mode == "Upload":
                         #         textposition='inside',
                         #         hovertemplate='<b>%{label}</b><br>Value: %{value:.3f}<br>Percent: %{percent}<extra></extra>'
                         #     )])
-                        # fig.update_layout(
-                        #     title="Topics found in uploaded policy",
-                        #     showlegend=True,
-                        #     height=500
-                        #  )
                         fig.update_layout(title="Topics found in uploaded policy")
                         st.plotly_chart(fig)#, width='stretch')
 
@@ -1459,46 +1459,65 @@ elif mode == "Upload":
 
 
 #-------------------------------------------------------------------------------------------------
-# ABOUT------------------------------------------------------------------------------------------
-else: #about
-    st.header("About the HEI Gen-AI Policy Toolkit")
-    st.markdown("""
-    This app allows users to explore a corpus of UK Higher Education Institutions' policies on Generative AI, as well as upload and compare their own policies.
+# ENFORCE------------------------------------------------------------------------------------------
+elif mode == "Enforceablity":
+    st.header("Check Enforceablity")
+    
+    propertyToCheck="is enforceable"
+    roleSetting="You are a university's compliance officer and you are tasked with determining if the following university policy for the use of Generative AI "
+    replyFormat = f" Grade the policy, providing a score from 0 to 5, where 5 is max positive value, in the following format ANSWER:<yourScore>, followed by a concise explanation in 1-2 sentences."
+    rubricText= """ The marking rubric is as follows:
+        Rating 5 – Fully enforceable: "The text gives specific, non-ambiguous rules (e.g. "students must not X", "students must Y"), along with who is responsible, how breaches are detected (e.g. checks, reporting routes), and what formal procedures and sanctions apply. There is a clear link to existing institutional processes (e.g. academic misconduct, ethics approval, data protection) so that every prohibited/required behaviour has a recognisable enforcement route";
+        Rating 4 – Mostly enforceable: "The text gives clear "should/must" rules that could be mapped to existing processes (e.g. academic misconduct, GDPR breaches), but monitoring methods, thresholds, or decision steps are only partly spelled out. Enforcement is feasible but would rely on staff using standard procedures rather than instructions fully contained in the text";	
+        Rating 3 – Partially enforceable: "The text mixes clear expectations ("students should not rely on XYZ when…") with advisory or reflective language ("students should reflect on the use of XYZ, "students should be aware that…"), and gives little or no detail on how issues would be identified or handled. Some clauses could be pursued under existing rules, but many expectations are difficult to verify or evidence, so enforcement would be uneven or highly discretionary";	
+        Rating 2 – Weakly enforceable: "The text is largely aspirational or educational, focusing on awareness‑raising ("students should be aware that output can contain errors/bias", "there are better tools to surface research papers") with minimal reference to consequences or formal processes. Even where problematic behaviour is implied, there is no clear path from the wording to any specific institutional mechanism, making enforcement practically difficult except in extreme or obvious cases";		
+        Rating 1 – Not enforceable in practice: "The text is purely normative or descriptive (e.g. describing a tool or process and how someone might use it) without prohibitions, requirements, or links to procedures, sanctions, or approval routes. It would be almost impossible to treat any part of the text as a formal basis for action because expectations are too vague, optional, or framed only as advice";		
+        Rating 0 – Not applicable / absent: "The text is purely informational, conceptual, or not related to Gen AI use. No wording can reasonably be interpreted as creating enforceable obligations or prohibitions """
+    
 
-    **Features:**
-    - Explore existing policies with search and filtering.
-    - View basic statistics and readability metrics for each policy.
-    - Upload your own policy document (txt, rtf, pdf, docx) and compare it against other universities using TF-IDF and semantic similarity.
-    - Download computed metrics and similarity results for further analysis.
+    SYSTEM_MESSAGE = f"""{roleSetting}{propertyToCheck}. {replyFormat}{rubricText}. The policy text is as follows: """
 
-    **Usage:**
-    - Use the sidebar to navigate between modes: About, Explore, Analyse, and Upload.
-    - In Explore mode, search for universities or keywords within policies.
-    - In Analyse mode, select a university to view detailed metrics.
-    - In Upload mode, upload your policy document to see how it compares with existing policies.
+    # Display rubric as a table with emoji indicators
+    with st.expander("📋 Enforceability Rubric (click to expand)", expanded=False):
+        rubric_data = pd.DataFrame(
+            {
+                "Description": [
+                    "Specific, non-ambiguous rules with clear responsibility, detection methods, and formal procedures linked to institutional processes.",
+                    "Clear 'should/must' rules mappable to existing processes, but monitoring methods and thresholds are only partly specified.",
+                    "Mix of clear expectations and advisory language; little detail on identification or handling; enforcement would be discretionary.",
+                    "Largely aspirational or educational focus on awareness-raising with minimal reference to consequences or institutional mechanisms.",
+                    "Purely normative or descriptive without prohibitions, requirements, or links to procedures, sanctions, or approval routes.",
+                    "Purely informational, conceptual, or unrelated to Gen AI use; no enforceable obligations or prohibitions."
+                ]
+            },
+            index=[
+                "🟢 5 – Fully Enforceable",
+                "🔵 4 – Mostly Enforceable",
+                "🟡 3 – Partially Enforceable",
+                "🟠 2 – Weakly Enforceable",
+                "🔴 1 – Not Enforceable",
+                "⚪ 0 – Not Applicable"
+            ]
+        )
+        st.table(rubric_data, border="horizontal")
 
-
-    Developed as part of the the BRA(AI)N Project (Building Resilience and Accountability in Artificial Intelligence Navigation) 
-    """)
-    # st.expander("About BRA(AI)N Project", expanded=False, icon=None, width="stretch")
-    with st.expander("About BRA(AI)N Project"):
-        st.write('''
-    BRA(AI)N - Building Resilience and Accountability in Artificial Intelligence Navigation
-
-    Funder(s): UKRI EPSRC and AI Security Institute (AISI)
-    Start Date: February 2025
-    End Date: February 2026
-
-
-    *Overview*
-    This research project seeks to advance understanding of artificial intelligence (AI) and inform educational policy by examining the role of Generative Artificial Intelligence (GenAI) in UK Higher Education (HE). With a focus on technologies such as ChatGPT and DeekSeek, the project explores how these tools are being embedded into academic practice. It considers not only their potential advantages and risks but also the preparedness and resilience of users navigating this evolving digital landscape. At its core, the project is committed to producing robust, evidence-based insights that support the ethical, effective and responsible integration of AI across the HE sector. The findings will be presented in a detailed report and shared with key stakeholders, including universities and relevant government departments. To extend its reach and impact, the study will also generate peer-reviewed academic publications, contributing to ongoing scholarly discussions and future policy development.
-
-    *Purpose and Research Focus*
-    This project welcomes the participation of a wide range of individuals—university students, academic staff, administrators, policymakers, regulators and AI industry experts—to explore the use and implications of GenAI in HE. It seeks to understand the motivations behind the adoption of these tools and to examine the impact when such technologies become unreliable or inaccessible. By drawing on participants’ real-world experiences with GenAI in teaching, learning and assessment, the study aims to uncover practical insights into their value, limitations and ethical implications. These perspectives are essential to shaping responsible and evidence-informed policies for the integration of GenAI technologies in the HE landscape.
-
-    *Get Involved*
-    Ethically approved by the University of East Anglia (Ref: ETH2425-1497), this interdisciplinary research will adopt a mixed-methods approach, conducted in two distinct phases:
-
-    *Stakeholder Engagement*
-    If you want to be involved in the stakeholders' engagement, please get in touch by emailing F.Liza@uea.ac.uk
-        ''')
+    # User input for policy text
+    st.subheader("Paste Your Policy Text")
+    policy_text = st.text_area(
+        "Enter or paste your policy text here to check enforceability:",
+        height=300,
+        placeholder="Paste the policy content here..."
+    )
+    
+    if policy_text.strip():
+        # Construct the full prompt with system message and user policy
+        full_prompt = SYSTEM_MESSAGE + "\n\n" + policy_text
+        
+        st.info(f"✓ Policy text received ({len(policy_text)} characters). Ready for analysis.")
+        
+        # Placeholder for analysis button
+        if st.button("Check Enforceability", type="primary"):
+            st.info("Analysis feature coming soon. The policy will be evaluated using the enforceability rubric above.")
+            # Future: send full_prompt to LLM (ollama, etc.)
+    else:
+        st.warning("Please enter or paste a policy text to analyze.")
