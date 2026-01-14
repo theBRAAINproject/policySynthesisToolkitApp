@@ -1468,10 +1468,10 @@ elif mode == "Upload":
 elif mode == "Enforceablity":
     st.header("Checking Enforceablity")
     model = 'gpt-oss:120b'
-    client = Client(
-        host="https://ollama.com",
-        headers={'Authorization': 'Bearer ' + st.secrets["OLLAMA_API_KEY"]}
-    )
+    # client = Client(
+    #     host="https://ollama.com",
+    #     headers={'Authorization': 'Bearer ' + st.secrets["OLLAMA_API_KEY"]}
+    # )
 
     propertyToCheck="is enforceable"
     roleSetting="You are a university's compliance officer and you are tasked with determining if the following university policy for the use of Generative AI "
@@ -1486,9 +1486,8 @@ elif mode == "Enforceablity":
     
 
     SYSTEM_MESSAGE = f"""{roleSetting}{propertyToCheck}. {replyFormat}{rubricText}. The policy text is as follows: """
-
-    accepted = st.checkbox("I have read and accept the Terms of Use & Privacy Notice.")
-    with st.expander("Terms of Use & Privacy Notice)", expanded=accepted):
+    accepted = st.checkbox("I have read and agree to the Terms of Use & Privacy Notice", value=False)
+    with st.expander("Terms of Use & Privacy Notice)", expanded=not accepted):
         st.markdown("""
         By using this enforceability checking tool, you acknowledge and agree to the following:
         - The policy text you provide will be sent to an external service (Ollama Cloud) for analysis.
