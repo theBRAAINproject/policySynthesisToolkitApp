@@ -1497,10 +1497,10 @@ elif mode == "Enforceablity":
         - We do not store or retain your policy text or analysis results beyond the duration of your session.
         - By proceeding, you consent to the processing of your policy text as described above.
                     
-        - Enforceability checking tool uses these models 
-                    gpt-oss:120b-cloud
-                    gpt-oss:20b-cloud
-                    deepseek-v3.1:671b-cloud          
+        - Enforceability checking tool uses these models: 
+                    gpt-oss:120b-cloud,
+                    gpt-oss:20b-cloud, and 
+                    deepseek-v3.1:671b-cloud        
         """)
         #allow user to select model
         # model = st.selectbox(
