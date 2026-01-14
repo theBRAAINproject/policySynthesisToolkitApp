@@ -1468,10 +1468,10 @@ elif mode == "Upload":
 elif mode == "Enforceablity":
     st.header("Checking Enforceablity")
     model = 'gpt-oss:120b'
-    # client = Client(
-    #     host="https://ollama.com",
-    #     headers={'Authorization': 'Bearer ' + st.secrets["OLLAMA_API_KEY"]}
-    # )
+    client = Client(
+        host="https://ollama.com",
+        headers={'Authorization': 'Bearer ' + st.secrets["OLLAMA_API_KEY"]}
+    )
 
     propertyToCheck="is enforceable"
     roleSetting="You are a university's compliance officer and you are tasked with determining if the following university policy for the use of Generative AI "
