@@ -1526,67 +1526,73 @@ elif mode == "Enforceablity":
             
             st.info(f"✓ Policy text received ({len(policy_text)} characters). Ready for analysis.")
             
-            # Placeholder for analysis button
+            # Button to trigger analysis
             if st.button("Check Enforceability", type="primary"):
                 with st.spinner("Analyzing policy enforceability..."):
-                    response = client.chat(
-                        model=model,
-                        messages=[{'role': 'user', 'content': full_prompt}],
-                        stream=False,
+                    results = []
+                    for _ in range(10):
+                        response = client.chat(
+                            model=model,
+                            messages=[{'role': 'user', 'content': full_prompt}],
+                            stream=False,
+                        )
+                        response_text = response.message.content.strip()
+
+                        # Parse ANSWER:<score> and explanation
+                        score_match = re.search(r'ANSWER\s*:\s*([0-5](?:\.\d+)?)', response_text, flags=re.IGNORECASE)
+                        if score_match:
+                            try:
+                                score_val = float(score_match.group(1))
+                            except Exception:
+                                continue
+                            expl = response_text[score_match.end():].strip()
+                            if expl.startswith(","):
+                                expl = expl[1:].strip()
+                            results.append((score_val, expl))
+
+                # If no valid results, show fallback
+                if not results:
+                    st.write("**Raw Response:**")
+                    st.write(response_text if 'response_text' in locals() else "No response.")
+                else:
+                    # Compute rounded average score (final answer)
+                    avg_score = sum(s for s, _ in results) / len(results)
+                    final_score = int(round(avg_score))
+
+                    # First explanation matching the final score (rounded)
+                    final_explanation = next(
+                        (e for s, e in results if int(round(s)) == final_score),
+                        results[0][1]
                     )
-                
-                # Extract and parse the response
-                response_text = response.message.content.strip()
-                
-                # Parse ANSWER:<score> format
-                if "ANSWER:" in response_text:
-                    parts = response_text.split("ANSWER:")
-                    explanation_part = parts[1].strip()
-                    
-                    # Extract score (first character after ANSWER:)
-                    score_char = explanation_part[0] if explanation_part else "?"
-                    # Extract explanation (rest of the text)
-                    explanation = explanation_part[1:].strip().lstrip(",").strip() if len(explanation_part) > 1 else ""
-                    
+
                     # Map score to color and emoji
                     score_colors = {
-                        "5": (":green", "🟢 5 – Fully Enforceable"),
-                        "4": (":blue", "🔵 4 – Mostly Enforceable"),
-                        "3": (":yellow", "🟡 3 – Partially Enforceable"),
-                        "2": (":orange", "🟠 2 – Weakly Enforceable"),
-                        "1": (":red", "🔴 1 – Not Enforceable"),
-                        "0": (":gray", "⚪ 0 – Not Applicable"),
+                        5: (":green", "🟢 5 – Fully Enforceable"),
+                        4: (":blue", "🔵 4 – Mostly Enforceable"),
+                        3: (":yellow", "🟡 3 – Partially Enforceable"),
+                        2: (":orange", "🟠 2 – Weakly Enforceable"),
+                        1: (":red", "🔴 1 – Not Enforceable"),
+                        0: (":gray", "⚪ 0 – Not Applicable"),
                     }
-                    
-                    color, label = score_colors.get(score_char, (":gray", "❓ Unknown"))
-                    
+                    color, label = score_colors.get(final_score, (":gray", "❓ Unknown"))
+
                     # Display results
                     st.divider()
                     st.markdown("### Analysis Result")
-                    
-                    # col1, col2 = st.columns([1, 3])
-                    # with col1:
                     st.markdown(f"{color}[**{label}**]")
-                    # with col2:
-                    if explanation:
-                        st.markdown(f"_{explanation}_")
+                    if final_explanation:
+                        st.markdown(f"_{final_explanation}_")
                     else:
                         st.info("No explanation available.")
-                    
                     st.divider()
-                else:
-                    # Fallback if response doesn't contain ANSWER: format
-                    st.write("**Raw Response:**")
-                    st.write(response_text)
-                
         else:
-            st.warning("Please enter or paste a policy text to analyze.")
+            st.warning("Please enter or paste text to analyze.")
 
             # Display rubric using columns with markdown colors
         with st.expander("See Enforceability Rubric (click to expand)", expanded=False):
             rubric_items = [
                 (":green[**🟢 5 – Fully Enforceable:**]", "Specific, non-ambiguous rules with clear responsibility, detection methods, and formal procedures linked to institutional processes."),
-                (":blue[**🔵 4 – Mostly Enforceable:**]", "Clear 'should/must' rules mappable to existing processes, but monitoring methods and thresholds are only partly spelled out."),
+                (":blue[**🔵 4 – Mostly Enforceable:**]", "Clear 'should/must' rules mappable to existing processes, but monitoring methods, thresholds, or decision steps are only partly spelled out."),
                 (":yellow[**🟡 3 – Partially Enforceable:**]", "Mix of clear expectations and advisory language; little detail on identification or handling; enforcement would be discretionary."),
                 (":orange[**🟠 2 – Weakly Enforceable:**]", "Largely aspirational or educational focus on awareness-raising with minimal reference to consequences or institutional mechanisms."),
                 (":red[**🔴 1 – Not Enforceable:**]", "Purely normative or descriptive without prohibitions, requirements, or links to procedures, sanctions, or approval routes."),
@@ -1600,50 +1606,3 @@ elif mode == "Enforceablity":
                 with col2:
                     st.markdown(description)
 
-
-#-------------------------------------------------------------------------------------------------
-# ABOUT------------------------------------------------------------------------------------------
-else: #about
-    st.header("About the HEI Gen-AI Policy Toolkit")
-    st.markdown("""
-    This app allows users to explore a corpus of UK Higher Education Institutions' policies on Generative AI, as well as upload and compare their own policies.
-
-    **Features:**
-    - Explore existing policies with search and filtering.
-    - View basic statistics and readability metrics for each policy.
-    - Upload your own policy document (txt, rtf, pdf, docx) and compare it against other universities using TF-IDF and semantic similarity.
-    - Download computed metrics and similarity results for further analysis.
-
-    **Usage:**
-    - Use the sidebar to navigate between modes: About, Explore, Analyse, and Upload.
-    - In Explore mode, search for universities or keywords within policies.
-    - In Analyse mode, select a university to view detailed metrics.
-    - In Upload mode, upload your policy document to see how it compares with existing policies.
-
-
-    Developed as part of the the BRA(AI)N Project (Building Resilience and Accountability in Artificial Intelligence Navigation) 
-    """)
-    # st.expander("About BRA(AI)N Project", expanded=False, icon=None, width="stretch")
-    with st.expander("About BRA(AI)N Project"):
-        st.write('''
-    BRA(AI)N - Building Resilience and Accountability in Artificial Intelligence Navigation
-
-    Funder(s): UKRI EPSRC and AI Security Institute (AISI)
-    Start Date: February 2025
-    End Date: February 2026
-
-
-    *Overview*
-    This research project seeks to advance understanding of artificial intelligence (AI) and inform educational policy by examining the role of Generative Artificial Intelligence (GenAI) in UK Higher Education (HE). With a focus on technologies such as ChatGPT and DeekSeek, the project explores how these tools are being embedded into academic practice. It considers not only their potential advantages and risks but also the preparedness and resilience of users navigating this evolving digital landscape. At its core, the project is committed to producing robust, evidence-based insights that support the ethical, effective and responsible integration of AI across the HE sector. The findings will be presented in a detailed report and shared with key stakeholders, including universities and relevant government departments. To extend its reach and impact, the study will also generate peer-reviewed academic publications, contributing to ongoing scholarly discussions and future policy development.
-
-    *Purpose and Research Focus*
-    This project welcomes the participation of a wide range of individuals—university students, academic staff, administrators, policymakers, regulators and AI industry experts—to explore the use and implications of GenAI in HE. It seeks to understand the motivations behind the adoption of these tools and to examine the impact when such technologies become unreliable or inaccessible. By drawing on participants’ real-world experiences with GenAI in teaching, learning and assessment, the study aims to uncover practical insights into their value, limitations and ethical implications. These perspectives are essential to shaping responsible and evidence-informed policies for the integration of GenAI technologies in the HE landscape.
-
-    *Get Involved*
-    Ethically approved by the University of East Anglia (Ref: ETH2425-1497), this interdisciplinary research will adopt a mixed-methods approach, conducted in two distinct phases:
-
-    *Stakeholder Engagement*
-    If you want to be involved in the stakeholders' engagement, please get in touch by emailing F.Liza@uea.ac.uk
-        ''')
-
-        
