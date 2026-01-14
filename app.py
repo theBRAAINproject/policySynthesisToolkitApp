@@ -626,7 +626,7 @@ if mode == "Contact Us":
     st.header("Contact Us")
     st.markdown("""
     For suggestions, feedback, or complaints regarding the HEI Gen AI Policy Toolkit, please reach out to us through the following channels:
-    - **Email**: to add.    
+    - **Email**:    to add    
     - **Project Website**: to add
     """)
 elif mode == "Explore":
@@ -1599,3 +1599,51 @@ elif mode == "Enforceablity":
                     st.markdown(rating)
                 with col2:
                     st.markdown(description)
+
+
+#-------------------------------------------------------------------------------------------------
+# ABOUT------------------------------------------------------------------------------------------
+else: #about
+    st.header("About the HEI Gen-AI Policy Toolkit")
+    st.markdown("""
+    This app allows users to explore a corpus of UK Higher Education Institutions' policies on Generative AI, as well as upload and compare their own policies.
+
+    **Features:**
+    - Explore existing policies with search and filtering.
+    - View basic statistics and readability metrics for each policy.
+    - Upload your own policy document (txt, rtf, pdf, docx) and compare it against other universities using TF-IDF and semantic similarity.
+    - Download computed metrics and similarity results for further analysis.
+
+    **Usage:**
+    - Use the sidebar to navigate between modes: About, Explore, Analyse, and Upload.
+    - In Explore mode, search for universities or keywords within policies.
+    - In Analyse mode, select a university to view detailed metrics.
+    - In Upload mode, upload your policy document to see how it compares with existing policies.
+
+
+    Developed as part of the the BRA(AI)N Project (Building Resilience and Accountability in Artificial Intelligence Navigation) 
+    """)
+    # st.expander("About BRA(AI)N Project", expanded=False, icon=None, width="stretch")
+    with st.expander("About BRA(AI)N Project"):
+        st.write('''
+    BRA(AI)N - Building Resilience and Accountability in Artificial Intelligence Navigation
+
+    Funder(s): UKRI EPSRC and AI Security Institute (AISI)
+    Start Date: February 2025
+    End Date: February 2026
+
+
+    *Overview*
+    This research project seeks to advance understanding of artificial intelligence (AI) and inform educational policy by examining the role of Generative Artificial Intelligence (GenAI) in UK Higher Education (HE). With a focus on technologies such as ChatGPT and DeekSeek, the project explores how these tools are being embedded into academic practice. It considers not only their potential advantages and risks but also the preparedness and resilience of users navigating this evolving digital landscape. At its core, the project is committed to producing robust, evidence-based insights that support the ethical, effective and responsible integration of AI across the HE sector. The findings will be presented in a detailed report and shared with key stakeholders, including universities and relevant government departments. To extend its reach and impact, the study will also generate peer-reviewed academic publications, contributing to ongoing scholarly discussions and future policy development.
+
+    *Purpose and Research Focus*
+    This project welcomes the participation of a wide range of individuals—university students, academic staff, administrators, policymakers, regulators and AI industry experts—to explore the use and implications of GenAI in HE. It seeks to understand the motivations behind the adoption of these tools and to examine the impact when such technologies become unreliable or inaccessible. By drawing on participants’ real-world experiences with GenAI in teaching, learning and assessment, the study aims to uncover practical insights into their value, limitations and ethical implications. These perspectives are essential to shaping responsible and evidence-informed policies for the integration of GenAI technologies in the HE landscape.
+
+    *Get Involved*
+    Ethically approved by the University of East Anglia (Ref: ETH2425-1497), this interdisciplinary research will adopt a mixed-methods approach, conducted in two distinct phases:
+
+    *Stakeholder Engagement*
+    If you want to be involved in the stakeholders' engagement, please get in touch by emailing F.Liza@uea.ac.uk
+        ''')
+
+        
