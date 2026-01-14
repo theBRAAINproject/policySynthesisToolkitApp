@@ -1565,6 +1565,10 @@ elif mode == "Enforceablity":
                         results[0][1]
                     )
 
+                    # Confidence = mode(final answer)/10 -> count of runs matching final_score divided by 10
+                    matching_count = sum(1 for s, _ in results if int(round(s)) == final_score)
+                    confidence = matching_count / 10.0
+
                     # Map score to color and emoji
                     score_colors = {
                         5: (":green", "🟢 5 – Fully Enforceable"),
@@ -1584,6 +1588,7 @@ elif mode == "Enforceablity":
                         st.markdown(f"_{final_explanation}_")
                     else:
                         st.info("No explanation available.")
+                    st.markdown(f"Confidence: {confidence:.2f}")
                     st.divider()
         else:
             st.warning("Please enter or paste text to analyze.")
