@@ -1186,17 +1186,17 @@ elif mode == "Upload":
 
     if uploaded:
         st.success(f"Uploaded: {uploaded_name}")
-        with st.expander("Uploaded policy text", expanded=True):
-            st.text_area("Uploaded policy text", value=uploaded_text, height=250, label_visibility="collapsed")
-        # st.markdown("**Uploaded Policy Text**")
-        # st.text_area("Uploaded policy text", value=uploaded_text, height=250, label_visibility="collapsed")
+        with st.expander("Uploaded document text", expanded=True):
+            st.text_area("Uploaded document text", value=uploaded_text, height=250, label_visibility="collapsed")
+        # st.markdown("**Uploaded Document Text**")
+        # st.text_area("Uploaded document text", value=uploaded_text, height=250, label_visibility="collapsed")
 
-        with st.expander("Word Cloud for Uploaded Policy", expanded=True):
-            wordcloud = generate_word_cloud(pd.Series([uploaded_text]), "Uploaded Policy")
+        with st.expander("Word Cloud for Uploaded Document", expanded=True):
+            wordcloud = generate_word_cloud(pd.Series([uploaded_text]), "Uploaded Document")
 
         up_bs = basic_stats(uploaded_text)
         up_rd = readability_metrics(uploaded_text)
-        with st.expander("Uploaded Policy's Stats", expanded=True):
+        with st.expander("Uploaded Document's Stats", expanded=True):
             # st.subheader("Uploaded policy metrics")
             st.write(pd.DataFrame([{**up_bs, **up_rd}]).T.rename(columns={0:"value"}))
 
@@ -1322,7 +1322,7 @@ elif mode == "Upload":
             csv = sim_df.to_csv(index=False).encode('utf-8')
 
             # scatterPlot2col()
-            uni_choice = "Uploaded Policy"
+            uni_choice = "Uploaded Document"
             sel_row = {
                 'policy_text': uploaded_text
             }
@@ -1434,13 +1434,13 @@ elif mode == "Upload":
                         #         textposition='inside',
                         #         hovertemplate='<b>%{label}</b><br>Value: %{value:.3f}<br>Percent: %{percent}<extra></extra>'
                         #     )])
-                        fig.update_layout(title="Topics found in uploaded policy")
+                        fig.update_layout(title="Topics found in uploaded document")
                         st.plotly_chart(fig)#, width='stretch')
 
                     except Exception as e:
-                        st.error(f"Failed to score uploaded policy with CorEx model: {e}")
+                        st.error(f"Failed to score uploaded document with CorEx model: {e}")
                 else:
-                    st.info("No CorEx model available to analyze uploaded policy.")
+                    st.info("No CorEx model available to analyze uploaded document.")
  
 
                             # # Also show a small table of topic scores (percent)
@@ -1453,7 +1453,7 @@ elif mode == "Upload":
                             # }).sort_values("score", ascending=False).reset_index(drop=True)
                             # st.table(topic_df.head(10))
             except Exception as e:
-                st.error(f"Error analyzing uploaded policy topics: {e}")
+                st.error(f"Error analyzing uploaded document topics: {e}")
 
             with st.expander("Advance Options", expanded=False):
                 st.download_button("Download similarity table (CSV)", data=csv, file_name="similarity_results.csv", mime="text/csv")
