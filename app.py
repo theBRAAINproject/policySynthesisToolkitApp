@@ -1588,7 +1588,14 @@ elif mode == "Enforceablity":
                         st.markdown(f"_{final_explanation}_")
                     else:
                         st.info("No explanation available.")
-                    st.markdown(f"Confidence: {confidence:.2f}")
+                    
+                    # Display individual scores from all 10 runs
+                    st.markdown("### Individual Scores from 10 Runs")
+                    individual_scores = [int(round(s)) for s, _ in results]
+                    scores_str = ", ".join(str(score) for score in individual_scores)
+                    st.markdown(f"**Scores:** [{scores_str}]")
+                    
+                    st.markdown(f"**Confidence:** {confidence:.2f} ({matching_count}/10)")
                     st.divider()
         else:
             st.warning("Please enter or paste text to analyze.")
