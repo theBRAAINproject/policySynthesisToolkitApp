@@ -621,7 +621,7 @@ mode = st.sidebar.radio("Select an option:", options=["About", "Explore", "Analy
 
 #-------------------------------------------------------------------------------------------------
 # ABOUT------------------------------------------------------------------------------------------
-else: #about
+if mode == "About":
     st.header("About the HEI Gen-AI Policy Toolkit")
     st.markdown("""
     This app allows users to explore a corpus of UK Higher Education Institutions' policies on Generative AI, as well as upload and compare their own policies.
@@ -663,16 +663,21 @@ else: #about
     *Stakeholder Engagement*
     If you want to be involved in the stakeholders' engagement, please get in touch by emailing F.Liza@uea.ac.uk
         ''')
-        
+
 #------------------------------------------------------------------------------------------------
-# EXPLORE------------------------------------------------------------------------------------------
-if mode == "Contact Us":
+# CONTACT------------------------------------------------------------------------------------------
+elif mode == "Contact Us":
     st.header("Contact Us")
     st.markdown("""
     For suggestions, feedback, or complaints regarding the HEI Gen AI Policy Toolkit, please reach out to us through the following channels:
     - **Email**:    to add    
     - **Project Website**: to add
     """)
+
+
+#------------------------------------------------------------------------------------------------
+# EXPLORE------------------------------------------------------------------------------------------
+   
 elif mode == "Explore":
     # st.header("Exploring UK HEI policies for Generative AI use")
     # prepare display_df for listing/searching (same logic as before)
