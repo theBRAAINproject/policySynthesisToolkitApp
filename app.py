@@ -777,7 +777,7 @@ elif mode == "Contact Us":
     For suggestions, feedback, or complaints regarding this toolkit, please reach out to us through the following channels:
     - **Email**:   f.liza@uea.ac.uk  or mehdi.rizvi@uea.ac.uk   
     - **Project Website**: https://research-portal.uea.ac.uk/en/projects/braain-building-resilience-and-accountability-in-artificial-intel/
-
+    - **GitHub Repo**: https://github.com/theBRAAINproject/policySynthesisToolkitApp
                 
     For technical issues or feature requests, please open an [issue](https://github.com/theBRAAINproject/policySynthesisToolkitApp/issues) or submit a [pull request](https://github.com/theBRAAINproject/policySynthesisToolkitApp/pulls) on GitHub.
     """)
