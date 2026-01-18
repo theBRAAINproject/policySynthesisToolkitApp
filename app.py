@@ -774,11 +774,14 @@ if mode == "About":
 elif mode == "Contact Us":
     st.header("Contact Us")
     st.markdown("""
-    For suggestions, feedback, or complaints regarding the HEI Gen AI Policy Toolkit, please reach out to us through the following channels:
-    - **Email**:    to add    
-    - **Project Website**: to add
-    """)
+    For suggestions, feedback, or complaints regarding this toolkit, please reach out to us through the following channels:
+    - **Email**:   f.liza@uea.ac.uk  or mehdi.rizvi@uea.ac.uk   
+    - **Project Website**: https://research-portal.uea.ac.uk/en/projects/braain-building-resilience-and-accountability-in-artificial-intel/
 
+                
+    For technical issues or feature requests, please open an [issue](https://github.com/theBRAAINproject/policySynthesisToolkitApp/issues) or submit a [pull request](https://github.com/theBRAAINproject/policySynthesisToolkitApp/pulls) on GitHub.
+    """)
+    
 
 #------------------------------------------------------------------------------------------------
 # EXPLORE------------------------------------------------------------------------------------------
