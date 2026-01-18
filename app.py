@@ -1353,12 +1353,12 @@ elif mode == "Upload":
             
             if not is_policy:
                 st.warning(f"⚠️ This document does not have typical keywords found in a UK university AI policies.")
-                st.info(f"**Detected keywords:** {', '.join(matched_terms[:5]) if matched_terms else 'None'}")
+                # st.info(f"**Detected keywords:** {', '.join(matched_terms[:5]) if matched_terms else 'None'}")
                 
                 # Ask user to confirm before continuing
                 continue_anyway = st.checkbox("Continue analysis anyway")
                 if not continue_anyway:
-                    st.info("Please upload a university AI policy document or check the box above to continue.")
+                    # st.info("Please upload a university AI policy document or check the box above to continue.")
                     st.stop()
             # else:
             #     st.success(f"✓ Document appears to be a university AI policy (confidence: {confidence:.0%})")
