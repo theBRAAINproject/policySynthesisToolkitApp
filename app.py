@@ -1264,129 +1264,129 @@ elif mode == "Upload":
                 if not continue_anyway:
                     st.info("Please upload a policy document or check the box above to continue.")
                     st.stop()
+                else:
+                # Continue with analysis (either keywords found OR user confirmed to continue)
+                with st.expander("Word Cloud for Uploaded Document", expanded=True):
+                    wordcloud = generate_word_cloud(pd.Series([uploaded_text]), "Uploaded Document")
 
-            # Continue with analysis (either keywords found OR user confirmed to continue)
-            with st.expander("Word Cloud for Uploaded Document", expanded=True):
-                wordcloud = generate_word_cloud(pd.Series([uploaded_text]), "Uploaded Document")
+                up_bs = basic_stats(uploaded_text)
+                up_rd = readability_metrics(uploaded_text)
+                with st.expander("Uploaded Document's Stats", expanded=True):
+                    st.write(pd.DataFrame([{**up_bs, **up_rd}]).T.rename(columns={0:"value"}))
 
-            up_bs = basic_stats(uploaded_text)
-            up_rd = readability_metrics(uploaded_text)
-            with st.expander("Uploaded Document's Stats", expanded=True):
-                st.write(pd.DataFrame([{**up_bs, **up_rd}]).T.rename(columns={0:"value"}))
-
-            corpus_texts = df['policy_text'].astype(str).tolist()
-            corpus_meta = df['university'].astype(str).tolist()
-            if len(corpus_texts) == 0:
-                st.warning("No corpus policies available to compare against.")
-            else:
-                with st.expander("Similarity with other Policies", expanded=True):
-                    sim_df = tfidf_similarity(
-                        corpus_texts=df['policy_text'].tolist(),
-                        corpus_meta=df['university'].tolist(),
-                        uploaded_text=uploaded_text,
-                        build_tfidf_matrix_func=build_tfidf_matrix
-                    )
-                    st.dataframe(sim_df.head(20))
-                
-                    #add scatterPlot2col for similarity scores, based on TF-IDF similarity, as in sim_df, sims
-                    # Pre-build the TF-IDF matrix with all texts to ensure compatible dimensions
-                    all_texts = corpus_texts + [uploaded_text]
-                    vectorizer, X_all = build_tfidf_matrix(all_texts)
-                    uploaded_vec = X_all[-1]
+                corpus_texts = df['policy_text'].astype(str).tolist()
+                corpus_meta = df['university'].astype(str).tolist()
+                if len(corpus_texts) == 0:
+                    st.warning("No corpus policies available to compare against.")
+                else:
+                    with st.expander("Similarity with other Policies", expanded=True):
+                        sim_df = tfidf_similarity(
+                            corpus_texts=df['policy_text'].tolist(),
+                            corpus_meta=df['university'].tolist(),
+                            uploaded_text=uploaded_text,
+                            build_tfidf_matrix_func=build_tfidf_matrix
+                        )
+                        st.dataframe(sim_df.head(20))
                     
-                    # scatterPlot2col(df, uploaded_text, "Uploaded Policy", 
-                    #                lambda t: cosine_similarity(
-                    #                    vectorizer.transform([str(t)]),
-                    #                    uploaded_vec.reshape(1, -1)
-                    #                ).flatten()[0] if str(t).strip() else 0.0,
-                    #                "Similarity Score", "#FAF7E6", "{:.3f}")
-                    
-                    # scatterPlot2col(df, sel_row, uni_choice, 
-                    #                lambda t: len(re.findall(r"\w+", str(t))), 
-                    #                "Word Count", "#EDF1FD", "{:,.0f}")
+                        #add scatterPlot2col for similarity scores, based on TF-IDF similarity, as in sim_df, sims
+                        # Pre-build the TF-IDF matrix with all texts to ensure compatible dimensions
+                        all_texts = corpus_texts + [uploaded_text]
+                        vectorizer, X_all = build_tfidf_matrix(all_texts)
+                        uploaded_vec = X_all[-1]
+                        
+                        # scatterPlot2col(df, uploaded_text, "Uploaded Policy", 
+                        #                lambda t: cosine_similarity(
+                        #                    vectorizer.transform([str(t)]),
+                        #                    uploaded_vec.reshape(1, -1)
+                        #                ).flatten()[0] if str(t).strip() else 0.0,
+                        #                "Similarity Score", "#FAF7E6", "{:.3f}")
+                        
+                        # scatterPlot2col(df, sel_row, uni_choice, 
+                        #                lambda t: len(re.findall(r"\w+", str(t))), 
+                        #                "Word Count", "#EDF1FD", "{:,.0f}")
 
 
 
-                    # if HAS_SBERT:
-                    #     st.markdown("**Semantic similarity (sentence-transformers)**")
-                    #     with st.spinner("Computing SBERT embeddings..."):
-                    #         model = build_sbert_model()
-                    #         if model is not None:
-                    #             emb_sims = compute_embedding_sim(model, corpus_texts, uploaded_text)
-                    #             sim_df['sbert_similarity'] = emb_sims
-                    #             sim_df = sim_df.sort_values('sbert_similarity', ascending=False)
-                    #             st.dataframe(sim_df[['university','sbert_similarity','similarity']].head(20))
-                    #         else:
-                    #             st.info("SBERT model not available.")
+                        # if HAS_SBERT:
+                        #     st.markdown("**Semantic similarity (sentence-transformers)**")
+                        #     with st.spinner("Computing SBERT embeddings..."):
+                        #         model = build_sbert_model()
+                        #         if model is not None:
+                        #             emb_sims = compute_embedding_sim(model, corpus_texts, uploaded_text)
+                        #             sim_df['sbert_similarity'] = emb_sims
+                        #             sim_df = sim_df.sort_values('sbert_similarity', ascending=False)
+                        #             st.dataframe(sim_df[['university','sbert_similarity','similarity']].head(20))
+                        #         else:
+                        #             st.info("SBERT model not available.")
 
-                    st.markdown("**Top matches (excerpt)**")
-                    top_n = sim_df.head(3)
-                    # st.dataframe(sim_df.head(3))
-                    
-                    for _, r in top_n.iterrows():
-                        #find corresponding value of col 'Filename' in df by searching university name from sim_df, same as filename var
-                        filename = df.loc[df['university'] == r['university'], 'filename'].values[0]
+                        st.markdown("**Top matches (excerpt)**")
+                        top_n = sim_df.head(3)
+                        # st.dataframe(sim_df.head(3))
+                        
+                        for _, r in top_n.iterrows():
+                            #find corresponding value of col 'Filename' in df by searching university name from sim_df, same as filename var
+                            filename = df.loc[df['university'] == r['university'], 'filename'].values[0]
 
-                        # Get university name from col 'Filename' if exists, else from 'university'
-                        uni = r['University'] if 'University' in r else r['university']
-                        sel_row = sim_df.iloc[0]
-                        # #if logo of university exists in img/logos/filename.png display it
-                        # logofilename = os.path.splitext(sel_row.get('filename','').strip())[0]
-                        logofilename = os.path.splitext(filename.strip())[0]
-                        logo_path = f"img/{logofilename}.png"
-                        # st.write("logo:", logo_path)
+                            # Get university name from col 'Filename' if exists, else from 'university'
+                            uni = r['University'] if 'University' in r else r['university']
+                            sel_row = sim_df.iloc[0]
+                            # #if logo of university exists in img/logos/filename.png display it
+                            # logofilename = os.path.splitext(sel_row.get('filename','').strip())[0]
+                            logofilename = os.path.splitext(filename.strip())[0]
+                            logo_path = f"img/{logofilename}.png"
+                            # st.write("logo:", logo_path)
 
-                        simscore = r['similarity']
-                        full_text = df.loc[df['university']==uni, 'policy_text'].values[0]
-                        # excerpt = full_text[:800].replace("\n", " ")
+                            simscore = r['similarity']
+                            full_text = df.loc[df['university']==uni, 'policy_text'].values[0]
+                            # excerpt = full_text[:800].replace("\n", " ")
 
-                        with st.container(border=True):
-                            col1, col2 = st.columns([3,1])
-                            with col2:  
-                                if os.path.exists(logo_path):
-                                    st.image(logo_path, width=200)  
-                            with col1:
-                            # st.markdown(f"**{uni}**, Similarity Score: {simscore:.3f}, out of 1.000")
-                                st.markdown(f"**{uni}**")
-                                #if score more then 0.85 color green, else if more than 0.5 color orange, else blue
-                                if simscore >= 0.85:
-                                    scorecolor="green"
-                                    #icon up arrow
-                                    scoreicon=":material/arrow_upward:"
-                                elif simscore >= 0.5:
-                                    scorecolor="orange"
-                                    scoreicon=":material/remove:"
-                                else:
-                                    scorecolor="blue"
-                                    scoreicon=":material/arrow_downward:"
-                                st.badge(f"Similarity Score: {simscore:.3f}, out of 1.000", icon=scoreicon, color=scorecolor)
-                            # st.badge(f"Policies loaded: {len(display_df)}", icon=":material/check:", color="blue")
-                                # st.write(excerpt + ("..." if len(full_text)>800 else ""))
-                            # with st.expander("Uploaded policy text", expanded=True):
-                            st.text_area(f"Policy text {uni}", value=full_text, height=250, label_visibility="collapsed")
+                            with st.container(border=True):
+                                col1, col2 = st.columns([3,1])
+                                with col2:  
+                                    if os.path.exists(logo_path):
+                                        st.image(logo_path, width=200)  
+                                with col1:
+                                # st.markdown(f"**{uni}**, Similarity Score: {simscore:.3f}, out of 1.000")
+                                    st.markdown(f"**{uni}**")
+                                    #if score more then 0.85 color green, else if more than 0.5 color orange, else blue
+                                    if simscore >= 0.85:
+                                        scorecolor="green"
+                                        #icon up arrow
+                                        scoreicon=":material/arrow_upward:"
+                                    elif simscore >= 0.5:
+                                        scorecolor="orange"
+                                        scoreicon=":material/remove:"
+                                    else:
+                                        scorecolor="blue"
+                                        scoreicon=":material/arrow_downward:"
+                                    st.badge(f"Similarity Score: {simscore:.3f}, out of 1.000", icon=scoreicon, color=scorecolor)
+                                # st.badge(f"Policies loaded: {len(display_df)}", icon=":material/check:", color="blue")
+                                    # st.write(excerpt + ("..." if len(full_text)>800 else ""))
+                                # with st.expander("Uploaded policy text", expanded=True):
+                                st.text_area(f"Policy text {uni}", value=full_text, height=250, label_visibility="collapsed")
 
 
 
-                    # Comparison table with top match
-                    top_match_uni = sim_df.iloc[0]['university']
-                    top_text = df.loc[df['university']==top_match_uni, 'policy_text'].values[0]
-                    top_bs = basic_stats(top_text)
-                    top_rd = readability_metrics(top_text)
-                    comp = pd.DataFrame({
-                        "metric": ["chars","words","sentences","avg_words_per_sentence","flesch_kincaid","flesch_reading_ease"],
-                        "uploaded": [up_bs['chars'], up_bs['words'], up_bs['sentences'], up_bs['avg_words_per_sentence'], up_rd['flesch_kincaid_grade'] if HAS_TEXTSTAT else None, up_rd['flesch_reading_ease'] if HAS_TEXTSTAT else None],
-                        "top_match": [top_bs['chars'], top_bs['words'], top_bs['sentences'], top_bs['avg_words_per_sentence'], top_rd.get('flesch_kincaid_grade'), top_rd.get('flesch_reading_ease')]
-                    })
-                    st.subheader(f"Comparison with top match: {top_match_uni}")
-                    st.table(comp.set_index('metric'))
+                        # Comparison table with top match
+                        top_match_uni = sim_df.iloc[0]['university']
+                        top_text = df.loc[df['university']==top_match_uni, 'policy_text'].values[0]
+                        top_bs = basic_stats(top_text)
+                        top_rd = readability_metrics(top_text)
+                        comp = pd.DataFrame({
+                            "metric": ["chars","words","sentences","avg_words_per_sentence","flesch_kincaid","flesch_reading_ease"],
+                            "uploaded": [up_bs['chars'], up_bs['words'], up_bs['sentences'], up_bs['avg_words_per_sentence'], up_rd['flesch_kincaid_grade'] if HAS_TEXTSTAT else None, up_rd['flesch_reading_ease'] if HAS_TEXTSTAT else None],
+                            "top_match": [top_bs['chars'], top_bs['words'], top_bs['sentences'], top_bs['avg_words_per_sentence'], top_rd.get('flesch_kincaid_grade'), top_rd.get('flesch_reading_ease')]
+                        })
+                        st.subheader(f"Comparison with top match: {top_match_uni}")
+                        st.table(comp.set_index('metric'))
 
-                    csv = sim_df.to_csv(index=False).encode('utf-8')
+                        csv = sim_df.to_csv(index=False).encode('utf-8')
 
-                    # scatterPlot2col()
-                    uni_choice = "Uploaded Document"
-                    sel_row = {
-                        'policy_text': uploaded_text
-                    }
+                        # scatterPlot2col()
+                        uni_choice = "Uploaded Document"
+                        sel_row = {
+                            'policy_text': uploaded_text
+                        }
                     with st.expander("General Statistics", expanded=True):
                         scatterPlot2col(df, sel_row, uni_choice, 
                                 lambda t: len(re.findall(r"\w+", str(t))), 
