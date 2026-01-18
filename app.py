@@ -1631,7 +1631,7 @@ elif mode == "Enforceablity":
                     color, label = score_colors.get(final_score, (":gray", "❓ Unknown"))
 
                     # Display results
-                    with st.container():
+                    with st.container(border=True):
                     # st.divider()
                         st.markdown("### Analysis Result")
                         st.markdown(f"{color}[**{label}**]")
@@ -1652,7 +1652,7 @@ elif mode == "Enforceablity":
                             st.info("ℹ️ Moderate confidence in the result.")
                         else:
                             st.success("✅ High confidence in the result.")
-                        st.markdown(f"**Confidence Score:** {100*confidence:.2f}% or {matching_count}/10")
+                        st.markdown(f"**Confidence Score:** {100*confidence:.0f}% or {matching_count}/10")
                         st.divider()
         else:
             st.warning("Please enter or paste text to analyze.")
