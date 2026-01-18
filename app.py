@@ -1254,7 +1254,7 @@ elif mode == "Upload":
                 st.text_area("Uploaded document text", value=uploaded_text, height=250, label_visibility="collapsed")
 
             #check uploaded document has words like "policy", "generative ai", "ai use", "university", "gen ai", "guideline", "guidance"
-            important_keywords = ["policy", "generative ai", "ai use", "university", "gen ai", "guideline", "guidance"]
+            important_keywords = ["policy", "generative ai", "ai use", "university", "gen ai"]
             has_keywords = any(re.search(rf"\b{kw}\b", uploaded_text, re.IGNORECASE) for kw in important_keywords)
             
             if not has_keywords:
