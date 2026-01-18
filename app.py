@@ -1216,7 +1216,8 @@ elif mode == "Analyse":
         #     wedges, texts, autotexts = plt.pie(corex_vals, autopct='%1.1f%%', startangle=140, colors=colors)
 
         #     # Create separate legend/key
-        #     labels = [f"Group{i+1}: {label_words[i]} ({corex_vals[i]/corex_vals.sum()*100:.1f}%)" if label_words[i] else f"Group{i+1} ({corex_vals[i]/corex_vals.sum()*100:.1f}%)" for i in range(len(corex_vals))]
+        #     labels = [f"Group{i+1}: {label_words[i]} ({corex_vals[i]/corex_vals.sum()*100:.1f}%)" if label_words[i] else f"Group{i+1} ({corex_vals[i]/corex_vals.sum()*100:.1f}%)"
+        #               for i in range(len(corex_vals))]
         #     plt.legend(wedges, labels, title="Topics", loc="center left", bbox_to_anchor=(1, 0, 0.5, 1))
         # # plt.title(f"CorEx topic distribution for policy {idx}")
         # with st.expander(f"Topics found in {uni_choice}'s policy", expanded=True):
@@ -1604,9 +1605,9 @@ elif mode == "Enforceablity":
                     st.write("**Raw Response:**")
                     st.write(response_text if 'response_text' in locals() else "No response.")
                 else:
-                    # Compute rounded average score (final answer)
-                    avg_score = sum(s for s, _ in results) / len(results)
-                    final_score = int(round(avg_score))
+                    # Compute final score via mode of rounded scores (most voted)
+                    rounded_scores = [int(round(s)) for s, _ in results]
+                    final_score = int(np.bincount(rounded_scores, minlength=6).argmax())
 
                     # First explanation matching the final score (rounded)
                     final_explanation = next(
@@ -1614,9 +1615,9 @@ elif mode == "Enforceablity":
                         results[0][1]
                     )
 
-                    # Confidence = mode(final answer)/10 -> count of runs matching final_score divided by 10
-                    matching_count = sum(1 for s, _ in results if int(round(s)) == final_score)
-                    confidence = matching_count / 10.0
+                    # Confidence = proportion of runs voting for the mode
+                    matching_count = int((np.array(rounded_scores) == final_score).sum())
+                    confidence = matching_count / len(rounded_scores)
 
                     # Map score to color and emoji
                     score_colors = {
