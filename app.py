@@ -1360,8 +1360,8 @@ elif mode == "Upload":
                 if not continue_anyway:
                     st.info("Please upload a university AI policy document or check the box above to continue.")
                     st.stop()
-            else:
-                st.success(f"✓ Document appears to be a university AI policy (confidence: {confidence:.0%})")
+            # else:
+            #     st.success(f"✓ Document appears to be a university AI policy (confidence: {confidence:.0%})")
 
             # Continue with analysis (either policy detected OR user confirmed to continue)
             with st.expander("Word Cloud for Uploaded Document", expanded=True):
