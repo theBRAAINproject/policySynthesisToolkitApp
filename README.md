@@ -54,6 +54,7 @@ Main file path: app.py
 
 Click Deploy; Streamlit Cloud will install dependencies and run the app from that personal repo.
 ​
-## Check app running on Streamlit Cloud
+## View the live Streamlit app
+Click here for a live version of the app:
 
 [![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://braain-pst.streamlit.app/)
