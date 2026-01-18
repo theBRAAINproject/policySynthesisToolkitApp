@@ -1286,7 +1286,16 @@ elif mode == "Upload":
                         uploaded_text=uploaded_text,
                         build_tfidf_matrix_func=build_tfidf_matrix
                     )
-                    st.dataframe(sim_df.head(20))
+                    
+                    # Filter out policies with very low similarity (< 0.1)
+                    MIN_SIMILARITY_THRESHOLD = 0.1
+                    sim_df_filtered = sim_df[sim_df['similarity'] >= MIN_SIMILARITY_THRESHOLD].reset_index(drop=True)
+                    
+                    if len(sim_df_filtered) == 0:
+                        st.warning(f"No policies found with similarity score above {MIN_SIMILARITY_THRESHOLD:.1f}. Your document may not be a policy document or may be very different from the corpus.")
+                        st.dataframe(sim_df.head(20))
+                    else:
+                        st.dataframe(sim_df_filtered.head(20))
 
                     #add scatterPlot2col for similarity scores, based on TF-IDF similarity, as in sim_df, sims
                     # Pre-build the TF-IDF matrix with all texts to ensure compatible dimensions
@@ -1320,7 +1329,14 @@ elif mode == "Upload":
                     #             st.info("SBERT model not available.")
 
                     st.markdown("**Top matches (excerpt)**")
-                    top_n = sim_df.head(3)
+                    
+                    # Use filtered dataframe for top matches if available
+                    if len(sim_df_filtered) > 0:
+                        top_n = sim_df_filtered.head(3)
+                    else:
+                        # Fallback to unfiltered if no matches above threshold
+                        st.info("Showing top matches even though similarity is very low.")
+                        top_n = sim_df.head(3)
                     
                     for _, r in top_n.iterrows():
                         #find corresponding value of col 'Filename' in df by searching university name from sim_df, same as filename var
@@ -1367,7 +1383,10 @@ elif mode == "Upload":
 
 
                     # Comparison table with top match
-                    top_match_uni = sim_df.iloc[0]['university']
+                    if len(sim_df_filtered) > 0:
+                        top_match_uni = sim_df_filtered.iloc[0]['university']
+                    else:
+                        top_match_uni = sim_df.iloc[0]['university']
                     top_text = df.loc[df['university']==top_match_uni, 'policy_text'].values[0]
                     top_bs = basic_stats(top_text)
                     top_rd = readability_metrics(top_text)
@@ -1379,7 +1398,8 @@ elif mode == "Upload":
                     st.subheader(f"Comparison with top match: {top_match_uni}")
                     st.table(comp.set_index('metric'))
 
-                    csv = sim_df.to_csv(index=False).encode('utf-8')
+                    # Use filtered dataframe for CSV download
+                    csv = (sim_df_filtered if len(sim_df_filtered) > 0 else sim_df).to_csv(index=False).encode('utf-8')
 
                     # scatterPlot2col()
                     uni_choice = "Uploaded Document"
@@ -1398,7 +1418,7 @@ elif mode == "Upload":
                             lambda t: textstat.flesch_reading_ease(t), 
                             "Reading Ease", "#F2FDED")
                     
-                with st.expander("Topic Analysis of Uploaded Document", expanded=True):
+                with st.expander("Topics Found in Uploaded Document", expanded=True):
                     # Analyze uploaded policy with existing CorEx model and show topic pie chart
                     try:
                         if 'corex_model' not in globals():
