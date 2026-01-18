@@ -1246,280 +1246,293 @@ elif mode == "Upload":
 
     if uploaded:
         st.success(f"Uploaded: {uploaded_name}")
-        with st.expander("Uploaded document text", expanded=True):
-            st.text_area("Uploaded document text", value=uploaded_text, height=250, label_visibility="collapsed")
-        # st.markdown("**Uploaded Document Text**")
-        # st.text_area("Uploaded document text", value=uploaded_text, height=250, label_visibility="collapsed")
-
-        with st.expander("Word Cloud for Uploaded Document", expanded=True):
-            wordcloud = generate_word_cloud(pd.Series([uploaded_text]), "Uploaded Document")
-
-        up_bs = basic_stats(uploaded_text)
-        up_rd = readability_metrics(uploaded_text)
-        with st.expander("Uploaded Document's Stats", expanded=True):
-            # st.subheader("Uploaded policy metrics")
-            st.write(pd.DataFrame([{**up_bs, **up_rd}]).T.rename(columns={0:"value"}))
-
-
-
-        corpus_texts = df['policy_text'].astype(str).tolist()
-        corpus_meta = df['university'].astype(str).tolist()
-        if len(corpus_texts) == 0:
-            st.warning("No corpus policies available to compare against.")
+        #check if uploaded_text is empty
+        if not uploaded_text.strip():
+            st.error("Uploaded document is empty or could not be read. Please upload a valid document.")
         else:
-            with st.expander("Similarity with other Policies", expanded=True):
-            # st.markdown("**Similarity with other university policies (TF-IDF cosine)**")
-                # vectorizer, X = build_tfidf_matrix(corpus_texts + [uploaded_text])
-                # qvec = X[-1]
-                # corpus_X = X[:-1]
-                # sims = cosine_similarity(corpus_X, qvec).flatten()
-                # sim_df = pd.DataFrame({
-                #     "university": corpus_meta,
-                #     "similarity": sims,
-                #     "words": [len(re.findall(r"\w+", t)) for t in corpus_texts],
-                #     "chars": [len(t) for t in corpus_texts]
-                # }).sort_values("similarity", ascending=False).reset_index(drop=True)
-                sim_df = tfidf_similarity(
-                    corpus_texts=df['policy_text'].tolist(),
-                    corpus_meta=df['university'].tolist(),
-                    uploaded_text=uploaded_text,
-                    build_tfidf_matrix_func=build_tfidf_matrix  # your existing TF-IDF builder
-                )
-                st.dataframe(sim_df.head(20))
-       
-            #add scatterPlot2col for similarity scores, based on TF-IDF similarity, as in sim_df, sims
-            # Pre-build the TF-IDF matrix with all texts to ensure compatible dimensions
-            all_texts = corpus_texts + [uploaded_text]
-            vectorizer, X_all = build_tfidf_matrix(all_texts)
-            uploaded_vec = X_all[-1]
-            
-            # scatterPlot2col(df, uploaded_text, "Uploaded Policy", 
-            #                lambda t: cosine_similarity(
-            #                    vectorizer.transform([str(t)]),
-            #                    uploaded_vec.reshape(1, -1)
-            #                ).flatten()[0] if str(t).strip() else 0.0,
-            #                "Similarity Score", "#FAF7E6", "{:.3f}")
-            
-            # scatterPlot2col(df, sel_row, uni_choice, 
-            #                lambda t: len(re.findall(r"\w+", str(t))), 
-            #                "Word Count", "#EDF1FD", "{:,.0f}")
+            with st.expander("Uploaded document text", expanded=True):
+                st.text_area("Uploaded document text", value=uploaded_text, height=250, label_visibility="collapsed")
+                # st.markdown("**Uploaded Document Text**")
+                # st.text_area("Uploaded document text", value=uploaded_text, height=250, label_visibility="collapsed")
 
-
-
-            # if HAS_SBERT:
-            #     st.markdown("**Semantic similarity (sentence-transformers)**")
-            #     with st.spinner("Computing SBERT embeddings..."):
-            #         model = build_sbert_model()
-            #         if model is not None:
-            #             emb_sims = compute_embedding_sim(model, corpus_texts, uploaded_text)
-            #             sim_df['sbert_similarity'] = emb_sims
-            #             sim_df = sim_df.sort_values('sbert_similarity', ascending=False)
-            #             st.dataframe(sim_df[['university','sbert_similarity','similarity']].head(20))
-            #         else:
-            #             st.info("SBERT model not available.")
-
-            st.markdown("**Top matches (excerpt)**")
-            top_n = sim_df.head(3)
-            # st.dataframe(sim_df.head(3))
-            
-            for _, r in top_n.iterrows():
-                #find corresponding value of col 'Filename' in df by searching university name from sim_df, same as filename var
-                filename = df.loc[df['university'] == r['university'], 'filename'].values[0]
-
-                # Get university name from col 'Filename' if exists, else from 'university'
-                uni = r['University'] if 'University' in r else r['university']
-                sel_row = sim_df.iloc[0]
-                # #if logo of university exists in img/logos/filename.png display it
-                # logofilename = os.path.splitext(sel_row.get('filename','').strip())[0]
-                logofilename = os.path.splitext(filename.strip())[0]
-                logo_path = f"img/{logofilename}.png"
-                # st.write("logo:", logo_path)
-
-                simscore = r['similarity']
-                full_text = df.loc[df['university']==uni, 'policy_text'].values[0]
-                # excerpt = full_text[:800].replace("\n", " ")
-
-                with st.container(border=True):
-                    col1, col2 = st.columns([3,1])
-                    with col2:  
-                        if os.path.exists(logo_path):
-                            st.image(logo_path, width=200)  
-                    with col1:
-                    # st.markdown(f"**{uni}**, Similarity Score: {simscore:.3f}, out of 1.000")
-                        st.markdown(f"**{uni}**")
-                        #if score more then 0.85 color green, else if more than 0.5 color orange, else blue
-                        if simscore >= 0.85:
-                            scorecolor="green"
-                            #icon up arrow
-                            scoreicon=":material/arrow_upward:"
-                        elif simscore >= 0.5:
-                            scorecolor="orange"
-                            scoreicon=":material/remove:"
-                        else:
-                            scorecolor="blue"
-                            scoreicon=":material/arrow_downward:"
-                        st.badge(f"Similarity Score: {simscore:.3f}, out of 1.000", icon=scoreicon, color=scorecolor)
-                    # st.badge(f"Policies loaded: {len(display_df)}", icon=":material/check:", color="blue")
-                        # st.write(excerpt + ("..." if len(full_text)>800 else ""))
-                    # with st.expander("Uploaded policy text", expanded=True):
-                    st.text_area(f"Policy text {uni}", value=full_text, height=250, label_visibility="collapsed")
-
-
-
-            # Comparison table with top match
-            top_match_uni = sim_df.iloc[0]['university']
-            top_text = df.loc[df['university']==top_match_uni, 'policy_text'].values[0]
-            top_bs = basic_stats(top_text)
-            top_rd = readability_metrics(top_text)
-            comp = pd.DataFrame({
-                "metric": ["chars","words","sentences","avg_words_per_sentence","flesch_kincaid","flesch_reading_ease"],
-                "uploaded": [up_bs['chars'], up_bs['words'], up_bs['sentences'], up_bs['avg_words_per_sentence'], up_rd['flesch_kincaid_grade'] if HAS_TEXTSTAT else None, up_rd['flesch_reading_ease'] if HAS_TEXTSTAT else None],
-                "top_match": [top_bs['chars'], top_bs['words'], top_bs['sentences'], top_bs['avg_words_per_sentence'], top_rd.get('flesch_kincaid_grade'), top_rd.get('flesch_reading_ease')]
-            })
-            st.subheader(f"Comparison with top match: {top_match_uni}")
-            st.table(comp.set_index('metric'))
-
-            csv = sim_df.to_csv(index=False).encode('utf-8')
-
-            # scatterPlot2col()
-            uni_choice = "Uploaded Document"
-            sel_row = {
-                'policy_text': uploaded_text
-            }
-            with st.expander("General Statistics", expanded=True):
-                scatterPlot2col(df, sel_row, uni_choice, 
-                           lambda t: len(re.findall(r"\w+", str(t))), 
-                           "Word Count", "#EDF1FD", "{:,.0f}")
-                scatterPlot2col(df, sel_row, uni_choice, 
-                           lambda t: basic_stats(t)['avg_words_per_sentence'], 
-                           "Words/Sentence", "#F8EDFD")
-                scatterPlot2col(df, sel_row, uni_choice, 
-                           lambda t: textstat.flesch_reading_ease(t), 
-                           "Reading Ease", "#F2FDED")
-                
-
-            # Analyze uploaded policy with existing CorEx model and show topic pie chart
-            try:
-                if 'corex_model' not in globals():
-                    p1 = Path("save/corex_results.pkl")
-                    if p1.exists():
-                        with open(p1, "rb") as f:
-                            corex_model, doc_term_matrix, corex_policy_topic_means = pickle.load(f)
-                        st.success("Loaded CorEx results from save/corex_results.pkl")
-                    else:
-                        corex_model = None
-                        st.info("No CorEx pickle found in save")
-
-                if corex_model is not None:
-                    # Prepare anchors / topic count to match fitted model
-                    anchors = topics_from_thematic_analysis
-                    n_topics = len(anchors) + 1
-
-                    # Chunk the uploaded policy the same way as the corpus
-                    chunk_size = 60
-                    chunks = chunk_policy(str(uploaded_text or ""), chunk_size)
-
-                    # Build a CountVectorizer that uses the same vocabulary (words) the CorEx model was fitted with
-                    try:
-                        vocab = getattr(corex_model, "words", None)
-                        if vocab is None:
-                            # fallback: try attribute name used by some corex versions
-                            vocab = getattr(corex_model, "vocab", None)
-                        if vocab is None:
-                            raise RuntimeError("Cannot find vocabulary on corex_model to vectorize uploaded text.")
-                        vec = CountVectorizer(vocabulary=vocab, lowercase=True, token_pattern=r"(?u)\b\w+\b")
-                        doc_term_matrix_new = vec.transform(chunks) if chunks else None
-
-                        # Transform chunks through CorEx to get topic activations per chunk
-                        if doc_term_matrix_new is None or doc_term_matrix_new.shape[0] == 0:
-                            topic_scores = np.zeros(n_topics)
-                        else:
-                            chunk_topic_dist = corex_model.transform(doc_term_matrix_new)  # shape: (n_chunks, n_topics)
-                            # aggregate chunk-level topic activations to get a single vector for the uploaded policy
-                            topic_scores = np.asarray(chunk_topic_dist).mean(axis=0).flatten()
-
-                        # Ensure topic_scores length matches number of topics (pad/truncate if necessary)
-                        if len(topic_scores) < n_topics:
-                            topic_scores = np.pad(topic_scores, (0, n_topics - len(topic_scores)))
-                        elif len(topic_scores) > n_topics:
-                            topic_scores = topic_scores[:n_topics]
-
-
-                        # Insert uploaded policy topic scores into df temporarily so corexResults_piechart can read them
-                        # Ensure the CorEx topic columns exist
-                        for i in range(n_topics):
-                            col = f'CorEx_topic_{i}'
-                            if col not in df.columns:
-                                df[col] = 0.0
-
-                        tmp_idx = "__uploaded_policy__"
-                        # create a temporary row with the uploaded policy's topic scores
-                        df.loc[tmp_idx] = { 'university': uni_choice }
-                        for i in range(n_topics):
-                            df.loc[tmp_idx, f'CorEx_topic_{i}'] = float(topic_scores[i])
-
-                        # Use the existing helper to build the pie chart
-                        fig = corexResults_piechart(corex_model, tmp_idx, numTopicsPerGroup=9)
-
-                        # remove the temporary row to avoid mutating the main dataframe
-                        try:
-                            df.drop(index=tmp_idx, inplace=True)
-                        except Exception:
-                            pass
-                        # Build labels from the fitted CorEx model (top 3 words per topic)
-                        # labels = []
-                        # if 'corex_model' in globals() and corex_model is not None:
-                        #     topics_top3 = corex_model.get_topics(n_words=5)
-                        #     for i, t in enumerate(topics_top3[:n_topics]):
-                        #         if t:
-                        #             words = [w for w, *rest in t][:3]
-                        #             labels.append(', '.join(words))
-                        #         else:
-                        #             labels.append(f"Group{i+1}")
-                        # else:
-                        #     labels = [f"Group{i+1}" for i in range(n_topics)]
-
-                        # # Plot pie chart of topic distribution for the uploaded policy
-                        # if topic_scores.sum() == 0:
-                        #     fig = go.Figure(data=[go.Pie(
-                        #         labels=['No matching CorEx topics'],
-                        #         values=[1],
-                        #         marker=dict(colors=['lightgrey'])
-                        #     )])
-                        # else:
-                        #     fig = go.Figure(data=[go.Pie(
-                        #         labels=labels,
-                        #         values=topic_scores,
-                        #         textinfo='label+percent',
-                        #         textposition='inside',
-                        #         hovertemplate='<b>%{label}</b><br>Value: %{value:.3f}<br>Percent: %{percent}<extra></extra>'
-                        #     )])
-                        fig.update_layout(title="Topics found in uploaded document")
-                        st.plotly_chart(fig)#, width='stretch')
-
-                    except Exception as e:
-                        st.error(f"Failed to score uploaded document with CorEx model: {e}")
+            #check uploaded document has words like "policy", "generative ai", "ai use", "university", "gen ai", "guideline", "guidance"
+            important_keywords = ["policy", "generative ai", "ai use", "university", "gen ai", "guideline", "guidance"]
+            if not any(re.search(rf"\b{kw}\b", uploaded_text, re.IGNORECASE) for kw in important_keywords):
+                st.warning("The uploaded document does not seem to contain typical keywords related to university AI policies. Please ensure you have uploaded the correct document.")
+                #click this checkbox to continue anyway:
+                if not st.checkbox("Continue analysis anyway"):
+                    st.stop()
                 else:
-                    st.info("No CorEx model available to analyze uploaded document.")
- 
 
-                            # # Also show a small table of topic scores (percent)
-                            # pct = (topic_scores / (topic_scores.sum() if topic_scores.sum() > 0 else 1)) * 100
-                            # topic_df = pd.DataFrame({
-                            #     "topic_index": [f"Topic {i+1}" for i in range(len(topic_scores))],
-                            #     "top_words": labels,
-                            #     "score": topic_scores,
-                            #     "pct": np.round(pct, 2)
-                            # }).sort_values("score", ascending=False).reset_index(drop=True)
-                            # st.table(topic_df.head(10))
-            except Exception as e:
-                st.error(f"Error analyzing uploaded document topics: {e}")
+                    with st.expander("Word Cloud for Uploaded Document", expanded=True):
+                        wordcloud = generate_word_cloud(pd.Series([uploaded_text]), "Uploaded Document")
 
-            with st.expander("Advance Options", expanded=False):
-                st.download_button("Download similarity table (CSV)", data=csv, file_name="similarity_results.csv", mime="text/csv")
+                    up_bs = basic_stats(uploaded_text)
+                    up_rd = readability_metrics(uploaded_text)
+                    with st.expander("Uploaded Document's Stats", expanded=True):
+                        # st.subheader("Uploaded policy metrics")
+                        st.write(pd.DataFrame([{**up_bs, **up_rd}]).T.rename(columns={0:"value"}))
+
+
+
+                    corpus_texts = df['policy_text'].astype(str).tolist()
+                    corpus_meta = df['university'].astype(str).tolist()
+                    if len(corpus_texts) == 0:
+                        st.warning("No corpus policies available to compare against.")
+                    else:
+                        with st.expander("Similarity with other Policies", expanded=True):
+                        # st.markdown("**Similarity with other university policies (TF-IDF cosine)**")
+                            # vectorizer, X = build_tfidf_matrix(corpus_texts + [uploaded_text])
+                            # qvec = X[-1]
+                            # corpus_X = X[:-1]
+                            # sims = cosine_similarity(corpus_X, qvec).flatten()
+                            # sim_df = pd.DataFrame({
+                            #     "university": corpus_meta,
+                            #     "similarity": sims,
+                            #     "words": [len(re.findall(r"\w+", t)) for t in corpus_texts],
+                            #     "chars": [len(t) for t in corpus_texts]
+                            # }).sort_values("similarity", ascending=False).reset_index(drop=True)
+                            sim_df = tfidf_similarity(
+                                corpus_texts=df['policy_text'].tolist(),
+                                corpus_meta=df['university'].tolist(),
+                                uploaded_text=uploaded_text,
+                                build_tfidf_matrix_func=build_tfidf_matrix  # your existing TF-IDF builder
+                            )
+                            st.dataframe(sim_df.head(20))
+                
+                        #add scatterPlot2col for similarity scores, based on TF-IDF similarity, as in sim_df, sims
+                        # Pre-build the TF-IDF matrix with all texts to ensure compatible dimensions
+                        all_texts = corpus_texts + [uploaded_text]
+                        vectorizer, X_all = build_tfidf_matrix(all_texts)
+                        uploaded_vec = X_all[-1]
+                        
+                        # scatterPlot2col(df, uploaded_text, "Uploaded Policy", 
+                        #                lambda t: cosine_similarity(
+                        #                    vectorizer.transform([str(t)]),
+                        #                    uploaded_vec.reshape(1, -1)
+                        #                ).flatten()[0] if str(t).strip() else 0.0,
+                        #                "Similarity Score", "#FAF7E6", "{:.3f}")
+                        
+                        # scatterPlot2col(df, sel_row, uni_choice, 
+                        #                lambda t: len(re.findall(r"\w+", str(t))), 
+                        #                "Word Count", "#EDF1FD", "{:,.0f}")
+
+
+
+                        # if HAS_SBERT:
+                        #     st.markdown("**Semantic similarity (sentence-transformers)**")
+                        #     with st.spinner("Computing SBERT embeddings..."):
+                        #         model = build_sbert_model()
+                        #         if model is not None:
+                        #             emb_sims = compute_embedding_sim(model, corpus_texts, uploaded_text)
+                        #             sim_df['sbert_similarity'] = emb_sims
+                        #             sim_df = sim_df.sort_values('sbert_similarity', ascending=False)
+                        #             st.dataframe(sim_df[['university','sbert_similarity','similarity']].head(20))
+                        #         else:
+                        #             st.info("SBERT model not available.")
+
+                        st.markdown("**Top matches (excerpt)**")
+                        top_n = sim_df.head(3)
+                        # st.dataframe(sim_df.head(3))
+                        
+                        for _, r in top_n.iterrows():
+                            #find corresponding value of col 'Filename' in df by searching university name from sim_df, same as filename var
+                            filename = df.loc[df['university'] == r['university'], 'filename'].values[0]
+
+                            # Get university name from col 'Filename' if exists, else from 'university'
+                            uni = r['University'] if 'University' in r else r['university']
+                            sel_row = sim_df.iloc[0]
+                            # #if logo of university exists in img/logos/filename.png display it
+                            # logofilename = os.path.splitext(sel_row.get('filename','').strip())[0]
+                            logofilename = os.path.splitext(filename.strip())[0]
+                            logo_path = f"img/{logofilename}.png"
+                            # st.write("logo:", logo_path)
+
+                            simscore = r['similarity']
+                            full_text = df.loc[df['university']==uni, 'policy_text'].values[0]
+                            # excerpt = full_text[:800].replace("\n", " ")
+
+                            with st.container(border=True):
+                                col1, col2 = st.columns([3,1])
+                                with col2:  
+                                    if os.path.exists(logo_path):
+                                        st.image(logo_path, width=200)  
+                                with col1:
+                                # st.markdown(f"**{uni}**, Similarity Score: {simscore:.3f}, out of 1.000")
+                                    st.markdown(f"**{uni}**")
+                                    #if score more then 0.85 color green, else if more than 0.5 color orange, else blue
+                                    if simscore >= 0.85:
+                                        scorecolor="green"
+                                        #icon up arrow
+                                        scoreicon=":material/arrow_upward:"
+                                    elif simscore >= 0.5:
+                                        scorecolor="orange"
+                                        scoreicon=":material/remove:"
+                                    else:
+                                        scorecolor="blue"
+                                        scoreicon=":material/arrow_downward:"
+                                    st.badge(f"Similarity Score: {simscore:.3f}, out of 1.000", icon=scoreicon, color=scorecolor)
+                                # st.badge(f"Policies loaded: {len(display_df)}", icon=":material/check:", color="blue")
+                                    # st.write(excerpt + ("..." if len(full_text)>800 else ""))
+                                # with st.expander("Uploaded policy text", expanded=True):
+                                st.text_area(f"Policy text {uni}", value=full_text, height=250, label_visibility="collapsed")
+
+
+
+                        # Comparison table with top match
+                        top_match_uni = sim_df.iloc[0]['university']
+                        top_text = df.loc[df['university']==top_match_uni, 'policy_text'].values[0]
+                        top_bs = basic_stats(top_text)
+                        top_rd = readability_metrics(top_text)
+                        comp = pd.DataFrame({
+                            "metric": ["chars","words","sentences","avg_words_per_sentence","flesch_kincaid","flesch_reading_ease"],
+                            "uploaded": [up_bs['chars'], up_bs['words'], up_bs['sentences'], up_bs['avg_words_per_sentence'], up_rd['flesch_kincaid_grade'] if HAS_TEXTSTAT else None, up_rd['flesch_reading_ease'] if HAS_TEXTSTAT else None],
+                            "top_match": [top_bs['chars'], top_bs['words'], top_bs['sentences'], top_bs['avg_words_per_sentence'], top_rd.get('flesch_kincaid_grade'), top_rd.get('flesch_reading_ease')]
+                        })
+                        st.subheader(f"Comparison with top match: {top_match_uni}")
+                        st.table(comp.set_index('metric'))
+
+                        csv = sim_df.to_csv(index=False).encode('utf-8')
+
+                        # scatterPlot2col()
+                        uni_choice = "Uploaded Document"
+                        sel_row = {
+                            'policy_text': uploaded_text
+                        }
+                        with st.expander("General Statistics", expanded=True):
+                            scatterPlot2col(df, sel_row, uni_choice, 
+                                    lambda t: len(re.findall(r"\w+", str(t))), 
+                                    "Word Count", "#EDF1FD", "{:,.0f}")
+                            scatterPlot2col(df, sel_row, uni_choice, 
+                                    lambda t: basic_stats(t)['avg_words_per_sentence'], 
+                                    "Words/Sentence", "#F8EDFD")
+                            scatterPlot2col(df, sel_row, uni_choice, 
+                                    lambda t: textstat.flesch_reading_ease(t), 
+                                    "Reading Ease", "#F2FDED")
+                            
+
+                        # Analyze uploaded policy with existing CorEx model and show topic pie chart
+                        try:
+                            if 'corex_model' not in globals():
+                                p1 = Path("save/corex_results.pkl")
+                                if p1.exists():
+                                    with open(p1, "rb") as f:
+                                        corex_model, doc_term_matrix, corex_policy_topic_means = pickle.load(f)
+                                    st.success("Loaded CorEx results from save/corex_results.pkl")
+                                else:
+                                    corex_model = None
+                                    st.info("No CorEx pickle found in save")
+
+                            if corex_model is not None:
+                                # Prepare anchors / topic count to match fitted model
+                                anchors = topics_from_thematic_analysis
+                                n_topics = len(anchors) + 1
+
+                                # Chunk the uploaded policy the same way as the corpus
+                                chunk_size = 60
+                                chunks = chunk_policy(str(uploaded_text or ""), chunk_size)
+
+                                # Build a CountVectorizer that uses the same vocabulary (words) the CorEx model was fitted with
+                                try:
+                                    vocab = getattr(corex_model, "words", None)
+                                    if vocab is None:
+                                        # fallback: try attribute name used by some corex versions
+                                        vocab = getattr(corex_model, "vocab", None)
+                                    if vocab is None:
+                                        raise RuntimeError("Cannot find vocabulary on corex_model to vectorize uploaded text.")
+                                    vec = CountVectorizer(vocabulary=vocab, lowercase=True, token_pattern=r"(?u)\b\w+\b")
+                                    doc_term_matrix_new = vec.transform(chunks) if chunks else None
+
+                                    # Transform chunks through CorEx to get topic activations per chunk
+                                    if doc_term_matrix_new is None or doc_term_matrix_new.shape[0] == 0:
+                                        topic_scores = np.zeros(n_topics)
+                                    else:
+                                        chunk_topic_dist = corex_model.transform(doc_term_matrix_new)  # shape: (n_chunks, n_topics)
+                                        # aggregate chunk-level topic activations to get a single vector for the uploaded policy
+                                        topic_scores = np.asarray(chunk_topic_dist).mean(axis=0).flatten()
+
+                                    # Ensure topic_scores length matches number of topics (pad/truncate if necessary)
+                                    if len(topic_scores) < n_topics:
+                                        topic_scores = np.pad(topic_scores, (0, n_topics - len(topic_scores)))
+                                    elif len(topic_scores) > n_topics:
+                                        topic_scores = topic_scores[:n_topics]
+
+
+                                    # Insert uploaded policy topic scores into df temporarily so corexResults_piechart can read them
+                                    # Ensure the CorEx topic columns exist
+                                    for i in range(n_topics):
+                                        col = f'CorEx_topic_{i}'
+                                        if col not in df.columns:
+                                            df[col] = 0.0
+
+                                    tmp_idx = "__uploaded_policy__"
+                                    # create a temporary row with the uploaded policy's topic scores
+                                    df.loc[tmp_idx] = { 'university': uni_choice }
+                                    for i in range(n_topics):
+                                        df.loc[tmp_idx, f'CorEx_topic_{i}'] = float(topic_scores[i])
+
+                                    # Use the existing helper to build the pie chart
+                                    fig = corexResults_piechart(corex_model, tmp_idx, numTopicsPerGroup=9)
+
+                                    # remove the temporary row to avoid mutating the main dataframe
+                                    try:
+                                        df.drop(index=tmp_idx, inplace=True)
+                                    except Exception:
+                                        pass
+                                    # Build labels from the fitted CorEx model (top 3 words per topic)
+                                    # labels = []
+                                    # if 'corex_model' in globals() and corex_model is not None:
+                                    #     topics_top3 = corex_model.get_topics(n_words=5)
+                                    #     for i, t in enumerate(topics_top3[:n_topics]):
+                                    #         if t:
+                                    #             words = [w for w, *rest in t][:3]
+                                    #             labels.append(', '.join(words))
+                                    #         else:
+                                    #             labels.append(f"Group{i+1}")
+                                    # else:
+                                    #     labels = [f"Group{i+1}" for i in range(n_topics)]
+
+                                    # # Plot pie chart of topic distribution for the uploaded policy
+                                    # if topic_scores.sum() == 0:
+                                    #     fig = go.Figure(data=[go.Pie(
+                                    #         labels=['No matching CorEx topics'],
+                                    #         values=[1],
+                                    #         marker=dict(colors=['lightgrey'])
+                                    #     )])
+                                    # else:
+                                    #     fig = go.Figure(data=[go.Pie(
+                                    #         labels=labels,
+                                    #         values=topic_scores,
+                                    #         textinfo='label+percent',
+                                    #         textposition='inside',
+                                    #         hovertemplate='<b>%{label}</b><br>Value: %{value:.3f}<br>Percent: %{percent}<extra></extra>'
+                                    #     )])
+                                    fig.update_layout(title="Topics found in uploaded document")
+                                    st.plotly_chart(fig)#, width='stretch')
+
+                                except Exception as e:
+                                    st.error(f"Failed to score uploaded document with CorEx model: {e}")
+                            else:
+                                st.info("No CorEx model available to analyze uploaded document.")
+            
+
+                                        # # Also show a small table of topic scores (percent)
+                                        # pct = (topic_scores / (topic_scores.sum() if topic_scores.sum() > 0 else 1)) * 100
+                                        # topic_df = pd.DataFrame({
+                                        #     "topic_index": [f"Topic {i+1}" for i in range(len(topic_scores))],
+                                        #     "top_words": labels,
+                                        #     "score": topic_scores,
+                                        #     "pct": np.round(pct, 2)
+                                        # }).sort_values("score", ascending=False).reset_index(drop=True)
+                                        # st.table(topic_df.head(10))
+                        except Exception as e:
+                            st.error(f"Error analyzing uploaded document topics: {e}")
+
+                        with st.expander("Advance Options", expanded=False):
+                            st.download_button("Download similarity table (CSV)", data=csv, file_name="similarity_results.csv", mime="text/csv")
 
     else:
-        st.info("Upload a policy to compare it with other universities' policies.")
+        st.info("Upload a document to compare it with other universities' policies.")
 
 
 
