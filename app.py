@@ -534,19 +534,6 @@ def scatterPlot2col(
         )
 
 def tfidf_similarity(corpus_texts, corpus_meta, uploaded_text, build_tfidf_matrix_func):
-
-
-    #             vectorizer, X = build_tfidf_matrix(corpus_texts + [uploaded_text])
-    #             qvec = X[-1]
-    #             corpus_X = X[:-1]
-    #             sims = cosine_similarity(corpus_X, qvec).flatten()
-    #             sim_df = pd.DataFrame({
-    #                 "university": corpus_meta,
-    #                 "similarity": sims,
-    #                 "words": [len(re.findall(r"\w+", t)) for t in corpus_texts],
-    #                 "chars": [len(t) for t in corpus_texts]
-    #             }).sort_values("similarity", ascending=False).reset_index(drop=True)
-    #             st.dataframe(sim_df.head(20))
     """
     Compare an uploaded text to a corpus of documents using TF-IDF cosine similarity.
 
@@ -587,6 +574,114 @@ def tfidf_similarity(corpus_texts, corpus_meta, uploaded_text, build_tfidf_matri
 
 
     return sim_df
+
+def is_likely_ai_policy(text: str, threshold: float = 0.5) -> Tuple[bool, float, List[str]]:
+    """
+    Determine if uploaded text is likely a university AI policy.
+    Returns (is_policy, confidence_score, matched_keywords)
+    
+    Uses multiple keyword categories and scoring:
+    - Core policy indicators (high weight)
+    - AI/GenAI terms (high weight)
+    - University/institutional context (medium weight)
+    - Governance/compliance terms (medium weight)
+    """
+    text_lower = text.lower()
+    
+    # Category 1: Core policy indicators (weight: 0.4 each)
+    policy_indicators = [
+        r'\bpolicy\b',
+        r'\bguidelines?\b',
+        r'\bguidance\b',
+        r'\bstatement\b',
+        r'\bframework\b',
+        r'\bcode\s+of\s+conduct\b'
+    ]
+    
+    # Category 2: AI/GenAI specific terms (weight: 0.35 each)
+    ai_terms = [
+        r'\b(generative\s+)?ai\b',
+        r'\b(large\s+)?language\s+model',
+        r'\bchatgpt\b',
+        r'\b(chatbot|chat\s+bot)\b',
+        r'\bartificial\s+intelligence\b',
+        r'\bmachine\s+learning\b',
+        r'\bgenai\b',
+        r'\bllm\b',
+        r'\bai\s+tool',
+        r'\bai\s+system'
+    ]
+    
+    # Category 3: University/institutional context (weight: 0.2 each)
+    institutional_terms = [
+        r'\buniversit',
+        r'\bcollege\b',
+        r'\binstitution',
+        r'\bacademic\b',
+        r'\bstudent',
+        r'\bfaculty\b',
+        r'\bstaff\b',
+        r'\bteaching\b'
+    ]
+    
+    # Category 4: Governance/compliance terms (weight: 0.15 each)
+    governance_terms = [
+        r'\bresponsible',
+        r'\bethical',
+        r'\btransparenc',
+        r'\baccountab',
+        r'\brisk',
+        r'\bcompliance\b',
+        r'\bintegrity\b',
+        r'\buse\s+case',
+        r'\bprohibit',
+        r'\brequire'
+    ]
+    
+    matched = []
+    score = 0.0
+    
+    # Check policy indicators (0.4 points each, max 1.0)
+    policy_count = 0
+    for pattern in policy_indicators:
+        if re.search(pattern, text_lower):
+            matched.append(pattern)
+            policy_count += 1
+    policy_score = min(1.0, policy_count * 0.4)
+    score += policy_score * 0.35
+    
+    # Check AI terms (0.35 points each, max 1.0)
+    ai_count = 0
+    for pattern in ai_terms:
+        if re.search(pattern, text_lower):
+            matched.append(pattern)
+            ai_count += 1
+    ai_score = min(1.0, ai_count * 0.35)
+    score += ai_score * 0.35
+    
+    # Check institutional terms (0.2 points each, max 1.0)
+    inst_count = 0
+    for pattern in institutional_terms:
+        if re.search(pattern, text_lower):
+            matched.append(pattern)
+            inst_count += 1
+    inst_score = min(1.0, inst_count * 0.2)
+    score += inst_score * 0.2
+    
+    # Check governance terms (0.15 points each, max 1.0)
+    gov_count = 0
+    for pattern in governance_terms:
+        if re.search(pattern, text_lower):
+            matched.append(pattern)
+            gov_count += 1
+    gov_score = min(1.0, gov_count * 0.15)
+    score += gov_score * 0.1
+    
+    # Normalize score to 0-1 range
+    final_score = min(1.0, score)
+    is_policy = final_score >= threshold
+    
+    return is_policy, final_score, list(set(matched))
 
 #------------------------------------------------------------------------------------------------
 # MAIN-------------------------------------------------------------------------------------------
@@ -1253,19 +1348,22 @@ elif mode == "Upload":
             with st.expander("Uploaded document text", expanded=True):
                 st.text_area("Uploaded document text", value=uploaded_text, height=250, label_visibility="collapsed")
 
-            #check uploaded document has words like "policy", "generative ai", "ai use", "university", "gen ai", "guideline", "guidance"
-            important_keywords = ["policy", "generative ai", "ai use", "university", "gen ai"]
-            has_keywords = any(re.search(rf"\b{kw}\b", uploaded_text, re.IGNORECASE) for kw in important_keywords)
+            # Intelligent check: is this likely a university AI policy?
+            is_policy, confidence, matched_terms = is_likely_ai_policy(uploaded_text, threshold=0.5)
             
-            if not has_keywords:
-                st.warning("⚠️ The uploaded document does not seem to contain typical keywords related to university AI policies. Please ensure you have uploaded the correct document.")
+            if not is_policy:
+                st.warning(f"⚠️ This document does not have typical keywords found in a UK university AI policies.")
+                st.info(f"**Detected keywords:** {', '.join(matched_terms[:5]) if matched_terms else 'None'}")
+                
                 # Ask user to confirm before continuing
-                continue_anyway = st.checkbox("I confirm this is the correct document - continue analysis anyway")
+                continue_anyway = st.checkbox("Continue analysis anyway")
                 if not continue_anyway:
-                    st.info("Please upload a policy document or check the box above to continue.")
+                    st.info("Please upload a university AI policy document or check the box above to continue.")
                     st.stop()
+            else:
+                st.success(f"✓ Document appears to be a university AI policy (confidence: {confidence:.0%})")
 
-            # Continue with analysis (either keywords found OR user confirmed to continue)
+            # Continue with analysis (either policy detected OR user confirmed to continue)
             with st.expander("Word Cloud for Uploaded Document", expanded=True):
                 wordcloud = generate_word_cloud(pd.Series([uploaded_text]), "Uploaded Document")
 
@@ -1328,14 +1426,14 @@ elif mode == "Upload":
                     #         else:
                     #             st.info("SBERT model not available.")
 
-                    st.markdown("**Top matches (excerpt)**")
+                    st.markdown("**Top matches**")
                     
                     # Use filtered dataframe for top matches if available
                     if len(sim_df_filtered) > 0:
                         top_n = sim_df_filtered.head(3)
                     else:
                         # Fallback to unfiltered if no matches above threshold
-                        st.info("Showing top matches even though similarity is very low.")
+                        st.warning("Showing top matches even though similarity is very low.")
                         top_n = sim_df.head(3)
                     
                     for _, r in top_n.iterrows():
@@ -1369,10 +1467,10 @@ elif mode == "Upload":
                                     #icon up arrow
                                     scoreicon=":material/arrow_upward:"
                                 elif simscore >= 0.5:
-                                    scorecolor="orange"
-                                    scoreicon=":material/remove:"
-                                else:
                                     scorecolor="blue"
+                                    scoreicon=":material/unfold_less:"
+                                else:
+                                    scorecolor="orange"
                                     scoreicon=":material/arrow_downward:"
                                 st.badge(f"Similarity Score: {simscore:.3f}, out of 1.000", icon=scoreicon, color=scorecolor)
                             # st.badge(f"Policies loaded: {len(display_df)}", icon=":material/check:", color="blue")
