@@ -1640,12 +1640,18 @@ elif mode == "Enforceablity":
                         st.info("No explanation available.")
                     
                     # Display individual scores from all 10 runs
-                    st.markdown("### Individual Scores from 10 Runs")
+                    # st.markdown("### Individual Scores from 10 Runs")
                     individual_scores = [int(round(s)) for s, _ in results]
                     scores_str = ", ".join(str(score) for score in individual_scores)
-                    st.markdown(f"**Scores:** [{scores_str}]")
+                    # st.markdown(f"**Scores:** [{scores_str}]")
                     
-                    st.markdown(f"**Confidence:** {confidence:.2f} ({matching_count}/10)")
+                    if confidence*100 < 60:
+                        st.warning("⚠️ Low confidence in the result. Consider reviewing the policy manually.")  
+                    elif confidence*100 < 80:
+                        st.info("ℹ️ Moderate confidence in the result.")
+                    else:
+                        st.success("✅ High confidence in the result.")
+                    st.markdown(f"**Confidence Score:** {100*confidence:.2f}% or {matching_count}/10")
                     st.divider()
         else:
             st.warning("Please enter or paste text to analyze.")
