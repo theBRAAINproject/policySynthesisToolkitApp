@@ -180,17 +180,27 @@ def read_uploaded_file(uploaded) -> Tuple[str, str]:
         return "", ""
     fname = uploaded.name
     raw = uploaded.read()
-    if fname.lower().endswith(".txt"):
+    
+    fname_lower = fname.lower()
+    
+    if fname_lower.endswith(".txt"):
         text = raw.decode('utf-8', errors='ignore')
-    elif fname.lower().endswith(".pdf"):
+    elif fname_lower.endswith(".pdf"):
+        if not HAS_PDF:
+            st.error("PyPDF2 not installed. Cannot read PDF files.")
+            return fname, ""
         text = read_pdf(raw)
-    elif fname.lower().endswith(".docx"):
+    elif fname_lower.endswith((".docx", ".doc")):
+        if not HAS_DOCX:
+            st.error("python-docx not installed. Cannot read DOCX/DOC files.")
+            return fname, ""
         text = read_docx(raw)
     else:
-        # try decode
+        # try decode as text
         try:
             text = raw.decode('utf-8', errors='ignore')
-        except Exception:
+        except Exception as e:
+            st.error(f"Failed to read file {fname}: {e}")
             text = ""
     return fname, text
 
@@ -1231,7 +1241,7 @@ elif mode == "Analyse":
 elif mode == "Upload":
     st.header("Upload & Compare")
     # upload user policy
-    uploaded = st.file_uploader("Upload your policy (txt / pdf / docx)", type=['txt','pdf','docx'])
+    uploaded = st.file_uploader("Upload your policy (txt / pdf / doc / docx)", type=['txt','pdf','doc','docx'])
     uploaded_name, uploaded_text = read_uploaded_file(uploaded) if uploaded else ("", "")
 
     if uploaded:
