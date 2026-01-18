@@ -1292,7 +1292,7 @@ elif mode == "Upload":
                     sim_df_filtered = sim_df[sim_df['similarity'] >= MIN_SIMILARITY_THRESHOLD].reset_index(drop=True)
                     
                     if len(sim_df_filtered) == 0:
-                        st.warning(f"No policies found with similarity score above {MIN_SIMILARITY_THRESHOLD:.1f}. Your document may not be a policy document or may be very different from the corpus.")
+                        st.warning(f"No similar policies found. Your document may not be a policy document or may be very different from the corpus.")
                         st.dataframe(sim_df.head(20))
                     else:
                         st.dataframe(sim_df_filtered.head(20))
