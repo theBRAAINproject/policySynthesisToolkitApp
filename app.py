@@ -1697,7 +1697,7 @@ elif mode == "Enforceablity":
         # )
     if accepted:
         policy_text = st.text_area(
-            "Enter or paste your policy text here to check enforceability:",
+            "Enter or paste your policy text here to check enforceability. We recommend pasting one paragraph at a time for best results.",
             height=200,
             placeholder="Paste the policy text here..."
         )
