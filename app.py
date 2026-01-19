@@ -633,7 +633,6 @@ def is_likely_ai_policy(text: str, threshold: float = 0.5) -> Tuple[bool, float,
         r'\brisk',
         r'\bcompliance\b',
         r'\bintegrity\b',
-        r'\buse\s+case',
         r'\bprohibit',
         r'\brequire'
     ]
@@ -722,7 +721,7 @@ else:
 # Replace previous two-column UI with a mode-based layout
 # Add a sidebar mode selector: Explore, Upload, About
 st.sidebar.divider()
-mode = st.sidebar.radio("Select an option:", options=["About", "Explore", "Analyse", "Upload", "Enforceablity", "Contact Us"], index=0)
+mode = st.sidebar.radio("Select an option:", options=["About", "Explore", "Analyse", "Upload", "Check Enforceability", "Contact Us"], index=0)
 
 #-------------------------------------------------------------------------------------------------
 # ABOUT------------------------------------------------------------------------------------------
@@ -742,6 +741,7 @@ if mode == "About":
     - In Explore mode, search for universities or keywords within policies.
     - In Analyse mode, select a university to view detailed metrics.
     - In Upload mode, upload your policy document to see how it compares with existing policies.
+    - In Check Enforceability mode, upload a policy excerpt to assess its enforceability using ML analysis.
 
 
     Developed as part of the the BRA(AI)N Project (Building Resilience and Accountability in Artificial Intelligence Navigation) 
